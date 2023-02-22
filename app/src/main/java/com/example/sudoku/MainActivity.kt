@@ -44,7 +44,7 @@ fun Grid(modifier: Modifier = Modifier
 //    .fillMaxSize()
 //    .wrapContentSize(Alignment.Center)
 ){
-    Canvas(modifier = Modifier.size(360.dp)) {
+    Canvas(modifier = modifier.size(360.dp)) {
         val borderDrawWidth = 5f
         val borderColor = Color.Black
         val cellDrawWidth = 2f
@@ -93,7 +93,7 @@ fun Grid(modifier: Modifier = Modifier
 fun SudokuButton(modifier: Modifier = Modifier)
 {
     Button (
-        modifier = Modifier
+        modifier = modifier
             .height(40.dp)
             .width(40.dp),
         colors = buttonColors(
