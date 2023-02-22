@@ -41,8 +41,8 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun Grid(modifier: Modifier = Modifier
-    .fillMaxSize()
-    .wrapContentSize(Alignment.Center)
+//    .fillMaxSize()
+//    .wrapContentSize(Alignment.Center)
 ){
     Canvas(modifier = Modifier.size(360.dp)) {
         val borderDrawWidth = 5f
@@ -90,45 +90,57 @@ fun Grid(modifier: Modifier = Modifier
 }
 
 @Composable
-fun Test(modifier: Modifier = Modifier
-    .fillMaxSize()
-    .wrapContentSize(Alignment.Center)
-) {
-    Column(
-        modifier = modifier,
-        horizontalAlignment = Alignment.CenterHorizontally
+fun SudokuButton(modifier: Modifier = Modifier)
+{
+    Button (
+        modifier = Modifier
+            .height(40.dp)
+            .width(40.dp),
+        colors = buttonColors(
+            backgroundColor = Color.White,
+            contentColor = Color.Black,
+            disabledBackgroundColor = Color.White,
+            disabledContentColor = Color.Black
+        ),
+        //border = BorderStroke(1.dp, Color.Black),
+        elevation = null,
+        shape = GenericShape { size, _ ->
+            addRect(
+                Rect(
+                    left = 0f ,
+                    right = size.width,
+                    top = 0f ,
+                    bottom = size.height
+                )
+            )
+        },
+        onClick = {}
     ){
-        Box(
+        Text("8")
+    }
+}
+
+@Composable
+fun Test(modifier: Modifier = Modifier
+) {
+    Box(modifier = modifier.fillMaxSize())
+    {
+        Row(
             modifier = modifier
         ){
-            Grid(modifier)
-            Button (
-                modifier = Modifier
-                    .height(35.dp)
-                    .width(35.dp),
-                colors = buttonColors(
-                    backgroundColor = Color.White,
-                    contentColor = Color.Black,
-                    disabledBackgroundColor = Color.White,
-                    disabledContentColor = Color.Black
-                ),
-                elevation = null,
-                shape = GenericShape { size, _ ->
-                    addRect(
-                        Rect(
-                            left = 0f ,
-                            right = size.width,
-                            top = 0f ,
-                            bottom = size.height
-                        )
-                    )
-                },
-                onClick = {}
-            ){
-                Text("8")
+            for (i in 1..9){
+                Column(
+                    modifier = modifier,
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    for (j in 1..9){
+                        SudokuButton()
+                    }
+                }
             }
         }
 
+        Grid()
     }
 
 }
