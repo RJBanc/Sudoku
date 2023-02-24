@@ -44,8 +44,6 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun Grid(modifier: Modifier = Modifier
-//    .fillMaxSize()
-//    .wrapContentSize(Alignment.Center)
 ){
     Canvas(modifier = modifier.size(360.dp)) {
         val borderDrawWidth = 5f
@@ -99,8 +97,7 @@ fun SudokuButton(
     sudokuGame: SudokuLogic,
     row: Int,
     col: Int,
-    showHint: Boolean,
-    takeNotes: Boolean
+    showHint: Boolean
 ) {
     val sudokuField by fieldData.observeAsState()
     Button (
@@ -180,9 +177,7 @@ fun Game(
             .wrapContentSize(Alignment.Center),
         horizontalAlignment = Alignment.CenterHorizontally
     ){
-        Box(
-            //modifier = modifier.fillMaxSize()
-        )
+        Box()
         {
             Row(
                 modifier = modifier
@@ -198,8 +193,7 @@ fun Game(
                                 sudokuGame = sudokuGame,
                                 row = i,
                                 col = j,
-                                showHint = showHints,
-                                takeNotes = takeNotes
+                                showHint = showHints
                             )
                         }
                     }
@@ -263,7 +257,7 @@ data class Dc(
 )
 
 @Composable
-fun Fuck(s: MutableLiveData<Dc>, modifier: Modifier = Modifier)
+fun TestingStuff(s: MutableLiveData<Dc>, modifier: Modifier = Modifier)
 {
     var fu by remember { mutableStateOf(SudokuLogic()) }
     val f by s.observeAsState()
@@ -297,10 +291,6 @@ fun Fuck(s: MutableLiveData<Dc>, modifier: Modifier = Modifier)
 @Composable
 fun DefaultPreview() {
     SudokuTheme {
-//        var s = Something()
-//        var d = MutableLiveData<Dc>(Dc("Hello"))
-//        Fuck(d)
-//        d.postValue(Dc("Goodbye"))
         val sudoku = SudokuLogic()
         Game(sudokuGame = sudoku)
         sudoku.newGame()
