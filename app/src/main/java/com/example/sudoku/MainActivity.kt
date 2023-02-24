@@ -11,7 +11,8 @@ import androidx.compose.material.ButtonDefaults.buttonColors
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Surface
 import androidx.compose.material.Text
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -20,6 +21,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
 import com.example.sudoku.ui.theme.SudokuTheme
 
 class MainActivity : ComponentActivity() {
@@ -32,7 +35,9 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colors.background
                 ) {
-                    Test()
+                    val sudoku = SudokuLogic()
+                    Game(sudokuGame = sudoku)
+                    sudoku.newGame()
                 }
             }
         }
@@ -90,19 +95,18 @@ fun Grid(modifier: Modifier = Modifier
 }
 
 @Composable
-fun SudokuButton(modifier: Modifier = Modifier)
-{
+fun SudokuButton(
+    modifier: Modifier = Modifier,
+    fieldData: LiveData<SudokuField>,
+    sudokuGame: SudokuLogic,
+    row: Int,
+    col: Int
+) {
+    val sudokuField by fieldData.observeAsState()
     Button (
         modifier = modifier
             .height(40.dp)
             .width(40.dp),
-        colors = buttonColors(
-            backgroundColor = Color.White,
-            contentColor = Color.Black,
-            disabledBackgroundColor = Color.White,
-            disabledContentColor = Color.Black
-        ),
-        //border = BorderStroke(1.dp, Color.Black),
         elevation = null,
         shape = GenericShape { size, _ ->
             addRect(
@@ -114,42 +118,108 @@ fun SudokuButton(modifier: Modifier = Modifier)
                 )
             )
         },
-        onClick = {}
+        colors = buttonColors(
+            backgroundColor = if (sudokuField!!.isHighlighted) Color.Cyan else Color.White,
+            contentColor = Color.Black,
+            disabledBackgroundColor = if (sudokuField!!.isHighlighted) Color.Cyan else Color.White,
+            disabledContentColor = Color.Black
+        ),
+        enabled = sudokuField!!.isEnabled,
+        onClick = {
+            sudokuGame.fieldSelected(row, col)
+        }
     ){
-        Text("8")
+        Text(sudokuField!!.number ?: "")
     }
 }
 
 @Composable
-fun Test(modifier: Modifier = Modifier
+fun Game(
+    modifier: Modifier = Modifier,
+    sudokuGame: SudokuLogic
 ) {
-    Box(modifier = modifier.fillMaxSize())
-    {
-        Row(
-            modifier = modifier
-        ){
-            for (i in 1..9){
-                Column(
-                    modifier = modifier,
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    for (j in 1..9){
-                        SudokuButton()
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .wrapContentSize(Alignment.Center),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ){
+        Box(
+            //modifier = modifier.fillMaxSize()
+        )
+        {
+            Row(
+                modifier = modifier
+            ){
+                for (i in 0..8){
+                    Column(
+                        modifier = modifier,
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        for (j in 0..8){
+                            SudokuButton(
+                                fieldData = sudokuGame.getField(row = i, col = j),
+                                sudokuGame = sudokuGame,
+                                row = i,
+                                col = j
+                            )
+                        }
                     }
                 }
             }
+            Grid()
         }
-
-        Grid()
     }
+
 
 }
 
+class Something {
+    var t by mutableStateOf("Hello")
+}
+
+data class Dc(
+    val st: String
+)
+
+@Composable
+fun Fuck(s: MutableLiveData<Dc>, modifier: Modifier = Modifier)
+{
+    var fu by remember { mutableStateOf(SudokuLogic()) }
+    val f by s.observeAsState()
+    val m = arrayOfNulls<Int>(9)
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .wrapContentSize(Alignment.Center),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ){
+        Button(
+            modifier = modifier,
+            colors = buttonColors(
+                backgroundColor = Color.White,
+                contentColor = Color.Black,
+                disabledBackgroundColor = Color.White,
+                disabledContentColor = Color.Black
+            ),
+            onClick = {
+                //f.t = "World"
+                s.postValue(f!!.copy("World"))
+            }
+        ){
+            Text(f!!.st)
+        }
+    }
+
+}
 
 @Preview(showBackground = true)
 @Composable
 fun DefaultPreview() {
     SudokuTheme {
-        Test()
+        var s = Something()
+        var d = MutableLiveData<Dc>(Dc("Hello"))
+        Fuck(d)
+        d.postValue(Dc("Goodbye"))
     }
 }
