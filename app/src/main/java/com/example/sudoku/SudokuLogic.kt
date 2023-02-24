@@ -70,12 +70,20 @@ class SudokuLogic {
         return fields[row][col]
     }
 
-    fun setFieldNumber(s: String?) {
+    fun setFieldNumber(s: String, isNote: Boolean) {
         if (currField != null) {
-            currField!!.postValue(currField!!.value!!.copy(
-                number = s,
-                notes = currField!!.value!!.notes.clone()
-            ))
+            if (isNote) {
+                val notes = currField!!.value!!.notes.clone()
+                notes[s.toInt() - 1] = if(notes[s.toInt() - 1] == null) s else null
+                currField!!.postValue(currField!!.value!!.copy(
+                    notes = notes
+                ))
+            } else {
+                currField!!.postValue(currField!!.value!!.copy(
+                    number = if(currField!!.value!!.number != s) s else null,
+                    notes = currField!!.value!!.notes.clone()
+                ))
+            }
         }
     }
 
@@ -196,7 +204,7 @@ data class SudokuField(
     val isHighlighted: Boolean,
     val solution: String? = null,
     val number: String? = null,
-    val notes: Array<Int?> = arrayOfNulls<Int>(9)
+    val notes: Array<String?> = arrayOfNulls(9)
 ) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

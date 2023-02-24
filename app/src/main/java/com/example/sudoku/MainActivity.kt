@@ -6,11 +6,8 @@ import androidx.activity.compose.setContent
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.GenericShape
-import androidx.compose.material.Button
+import androidx.compose.material.*
 import androidx.compose.material.ButtonDefaults.buttonColors
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Surface
-import androidx.compose.material.Text
 import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
@@ -21,6 +18,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import com.example.sudoku.ui.theme.SudokuTheme
@@ -100,7 +98,9 @@ fun SudokuButton(
     fieldData: LiveData<SudokuField>,
     sudokuGame: SudokuLogic,
     row: Int,
-    col: Int
+    col: Int,
+    showHint: Boolean,
+    takeNotes: Boolean
 ) {
     val sudokuField by fieldData.observeAsState()
     Button (
@@ -129,10 +129,41 @@ fun SudokuButton(
             sudokuGame.fieldSelected(row, col)
         }
     ){
-        Text(
-            text = sudokuField!!.number ?: "",
-            color = if(sudokuField!!.solution == (sudokuField!!.number ?: "")) Color.Black else Color.Red
-        )
+        Box() {
+            if (sudokuField!!.number != null) {
+                Text(
+                    text = sudokuField!!.number ?: "",
+                    color = if(sudokuField!!.solution == (sudokuField!!.number ?: "") || !showHint)
+                        Color.Black
+                    else
+                        Color.Red
+                )
+            } else {
+                Column(modifier = modifier
+                    .requiredWidth(40.dp)
+                    .wrapContentSize(Alignment.Center)
+                ) {
+                    for (i in 0..2) {
+                        Row (modifier = modifier
+                            .wrapContentSize(Alignment.Center)
+                        ) {
+                            for (j  in 0..2) {
+                                Column(modifier = modifier
+                                    .requiredWidth(10.dp)
+                                    .wrapContentSize(
+                                        Alignment.Center)
+                                ) {
+                                    Text(
+                                        text = sudokuField!!.notes[i * 3 + j] ?: "",
+                                        fontSize = 6.sp
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -141,6 +172,8 @@ fun Game(
     modifier: Modifier = Modifier,
     sudokuGame: SudokuLogic
 ) {
+    var showHints by remember { mutableStateOf(false) }
+    var takeNotes by remember { mutableStateOf(false) }
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -164,7 +197,9 @@ fun Game(
                                 fieldData = sudokuGame.getField(row = i, col = j),
                                 sudokuGame = sudokuGame,
                                 row = i,
-                                col = j
+                                col = j,
+                                showHint = showHints,
+                                takeNotes = takeNotes
                             )
                         }
                     }
@@ -172,12 +207,33 @@ fun Game(
             }
             Grid()
         }
-        Spacer(modifier = modifier.height(16.dp))
+        Spacer(modifier = modifier.height(32.dp))
+        Row (
+            modifier = Modifier,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+
+            Text("Show Hints")
+            Switch(
+                modifier = Modifier,
+                checked = showHints,
+                onCheckedChange = {
+                    showHints = it
+                }
+            )
+            Spacer(modifier = modifier.width(100.dp))
+            Text("Notes")
+            Switch(
+                modifier = Modifier,
+                checked = takeNotes,
+                onCheckedChange = {
+                    takeNotes = it
+                }
+            )
+        }
+        Spacer(modifier = modifier.height(32.dp))
         Row(
-            modifier = Modifier
-               // .wrapContentSize(Alignment.Center)
-                //.padding(start=5.dp, end=5.dp)
-            ,
+            modifier = Modifier,
             verticalAlignment = Alignment.CenterVertically
         ) {
             for (i in 1..9) {
@@ -186,7 +242,7 @@ fun Game(
                         .height(40.dp)
                         .width(40.dp),
                     onClick = {
-                        sudokuGame.setFieldNumber(i.toString())
+                        sudokuGame.setFieldNumber(i.toString(), takeNotes)
                     }
                 ) {
                     Text(i.toString())
