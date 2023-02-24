@@ -1,13 +1,16 @@
 package com.example.sudoku
 
 import androidx.lifecycle.MutableLiveData
+import kotlin.random.Random
+import kotlin.random.nextInt
 
 class SudokuLogic {
     private var difficulty: Difficulty? = null
     private val fields: Array<Array<MutableLiveData<SudokuField>>>
-    private var sudoku: Array<Array<String?>>
+    private var solution: Array<Array<String?>>
     private val symbols = arrayOf("1", "2", "3", "4", "5", "6", "7", "8", "9")
     private var lastHighlighted: Array<MutableLiveData<SudokuField>>? = null
+    private var currField: MutableLiveData<SudokuField>? = null
 
     constructor() {
         fields  = Array(9) {
@@ -20,24 +23,46 @@ class SudokuLogic {
                 )
             }
         }
-        sudoku = Array(9) { arrayOfNulls<String>(9) }
+        solution = Array(9) { arrayOfNulls<String>(9) }
     }
 
     fun newGame(difficulty: Difficulty? = null) {
         this.difficulty = difficulty
-        sudoku = Array(9) { arrayOfNulls<String>(9) }
+
+        solution = Array(9) { arrayOfNulls<String>(9) }
         makeSolution()
+
+        var attempts = 3
+        val sudoku = solution.copy()
+        while (attempts > 0) {
+            var row: Int
+            var col: Int
+
+            do {
+                row = Random.nextInt(0..8)
+                col = Random.nextInt(0..8)
+            } while(sudoku[row][col] == null)
+            val backup = sudoku[row][col]
+            sudoku[row][col] = null
+
+            val trySolve = sudoku.copy()
+            if (checkNumSolutions(trySolve) != 1) {
+                sudoku[row][col] = backup
+                attempts -= 1
+            }
+        }
+
         for (i in 0..8) {
             for (j in 0..8) {
                 fields[i][j].postValue(
                     fields[i][j].value!!.copy(
                         notes = fields[i][j].value!!.notes.clone(),
-                        number = sudoku[i][j]
+                        number = sudoku[i][j],
+                        solution = solution[i][j]
                     )
                 )
             }
         }
-        //val solution = sudoku.copy()
     }
 
     fun getField(row: Int, col: Int): MutableLiveData<SudokuField> {
@@ -45,6 +70,8 @@ class SudokuLogic {
     }
 
     fun fieldSelected(row: Int, col: Int) {
+        currField = fields[row][col]
+
         val fromRow = (kotlin.math.floor(row / 3.0) * 3).toInt()
         val fromCol = (kotlin.math.floor(col / 3.0) * 3).toInt()
 
@@ -53,7 +80,7 @@ class SudokuLogic {
         val square = fields[fromRow].slice(fromCol..(fromCol + 2)).toTypedArray() +
                 fields[fromRow + 1].slice(fromCol..(fromCol + 2)).toTypedArray() +
                 fields[fromRow + 2].slice(fromCol..(fromCol + 2)).toTypedArray()
-        val toBeHighLighted = rowArr + colArr + square
+        val toBeHighlighted = rowArr + colArr + square
 
         if (lastHighlighted != null) {
             for (field in lastHighlighted!!) {
@@ -64,20 +91,20 @@ class SudokuLogic {
             }
         }
 
-        for (field in toBeHighLighted) {
+        for (field in toBeHighlighted) {
             field.postValue(field.value!!.copy(
                 isHighlighted = true,
                 notes = field.value!!.notes.clone()
             ))
         }
 
-        lastHighlighted = toBeHighLighted
+        lastHighlighted = toBeHighlighted
     }
 
     private fun Array<Array<String?>>.copy() = Array(size) { get(it).clone() }
 
-    private fun checkGrid(): Boolean {
-        for (row in sudoku) {
+    private fun checkGrid(grid: Array<Array<String?>>): Boolean {
+        for (row in grid) {
             if (null in row) {
                 return false
             }
@@ -91,18 +118,18 @@ class SudokuLogic {
         for (i in 0..81) {
             row = kotlin.math.floor(i / 9.0).toInt()
             col = i % 9
-            if (sudoku[row][col] == null) {
+            if (solution[row][col] == null) {
                 symbols.shuffle()
                 for (value in symbols) {
-                    if (value !in sudoku[row] && value !in Array(9) { sudoku[it][col] }) {
+                    if (value !in solution[row] && value !in Array(9) { solution[it][col] }) {
                         val fromRow = (kotlin.math.floor(row / 3.0) * 3).toInt()
                         val fromCol = (kotlin.math.floor(col / 3.0) * 3).toInt()
-                        val square = sudoku[fromRow].slice(fromCol..(fromCol + 2)).toTypedArray() +
-                                sudoku[fromRow + 1].slice(fromCol..(fromCol + 2)).toTypedArray() +
-                                sudoku[fromRow + 2].slice(fromCol..(fromCol + 2)).toTypedArray()
+                        val square = solution[fromRow].slice(fromCol..(fromCol + 2)).toTypedArray() +
+                                solution[fromRow + 1].slice(fromCol..(fromCol + 2)).toTypedArray() +
+                                solution[fromRow + 2].slice(fromCol..(fromCol + 2)).toTypedArray()
                         if (value !in square) {
-                            sudoku[row][col] = value
-                            if (checkGrid()) {
+                            solution[row][col] = value
+                            if (checkGrid(solution)) {
                                 return true
                             }
                             else if (makeSolution()) {
@@ -114,13 +141,13 @@ class SudokuLogic {
                 break
             }
         }
-        sudoku[row][col] = null
+        solution[row][col] = null
         return false
     }
 
     private fun checkNumSolutions(grid: Array<Array<String?>>): Int {
         var numSolutions = 0
-        fun checkNumSolutionsRec(grid: Array<Array<String?>>): Boolean {
+        fun checkNumSolutionsRec(grid: Array<Array<String?>>) {
             var row = 0
             var col = 0
             for (i in 0..81) {
@@ -136,13 +163,11 @@ class SudokuLogic {
                                     grid[fromRow + 2].slice(fromCol..(fromCol + 2)).toTypedArray()
                             if (value !in square) {
                                 grid[row][col] = value
-                                if (checkGrid()) {
+                                if (checkGrid(grid)) {
                                     numSolutions += 1
                                     break
                                 }
-                                else if (checkNumSolutionsRec(grid)) {
-                                    return true
-                                }
+                                checkNumSolutionsRec(grid)
                             }
                         }
                     }
@@ -150,7 +175,6 @@ class SudokuLogic {
                 }
             }
             grid[row][col] = null
-            return false
         }
         checkNumSolutionsRec(grid)
         return numSolutions
