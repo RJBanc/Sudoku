@@ -129,7 +129,10 @@ fun SudokuButton(
             sudokuGame.fieldSelected(row, col)
         }
     ){
-        Text(sudokuField!!.number ?: "")
+        Text(
+            text = sudokuField!!.number ?: "",
+            color = if(sudokuField!!.solution == (sudokuField!!.number ?: "")) Color.Black else Color.Red
+        )
     }
 }
 
@@ -169,6 +172,27 @@ fun Game(
             }
             Grid()
         }
+        Spacer(modifier = modifier.height(16.dp))
+        Row(
+            modifier = Modifier
+               // .wrapContentSize(Alignment.Center)
+                //.padding(start=5.dp, end=5.dp)
+            ,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            for (i in 1..9) {
+                Button(
+                    modifier= modifier
+                        .height(40.dp)
+                        .width(40.dp),
+                    onClick = {
+                        sudokuGame.setFieldNumber(i.toString())
+                    }
+                ) {
+                    Text(i.toString())
+                }
+            }
+        }
     }
 
 
@@ -207,7 +231,7 @@ fun Fuck(s: MutableLiveData<Dc>, modifier: Modifier = Modifier)
                 s.postValue(f!!.copy("World"))
             }
         ){
-            Text(f!!.st)
+            Text(f!!.st, color=Color.Red)
         }
     }
 
@@ -217,9 +241,12 @@ fun Fuck(s: MutableLiveData<Dc>, modifier: Modifier = Modifier)
 @Composable
 fun DefaultPreview() {
     SudokuTheme {
-        var s = Something()
-        var d = MutableLiveData<Dc>(Dc("Hello"))
-        Fuck(d)
-        d.postValue(Dc("Goodbye"))
+//        var s = Something()
+//        var d = MutableLiveData<Dc>(Dc("Hello"))
+//        Fuck(d)
+//        d.postValue(Dc("Goodbye"))
+        val sudoku = SudokuLogic()
+        Game(sudokuGame = sudoku)
+        sudoku.newGame()
     }
 }

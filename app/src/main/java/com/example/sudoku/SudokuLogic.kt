@@ -56,6 +56,7 @@ class SudokuLogic {
             for (j in 0..8) {
                 fields[i][j].postValue(
                     fields[i][j].value!!.copy(
+                        isEnabled = sudoku[i][j] == null,
                         notes = fields[i][j].value!!.notes.clone(),
                         number = sudoku[i][j],
                         solution = solution[i][j]
@@ -67,6 +68,15 @@ class SudokuLogic {
 
     fun getField(row: Int, col: Int): MutableLiveData<SudokuField> {
         return fields[row][col]
+    }
+
+    fun setFieldNumber(s: String?) {
+        if (currField != null) {
+            currField!!.postValue(currField!!.value!!.copy(
+                number = s,
+                notes = currField!!.value!!.notes.clone()
+            ))
+        }
     }
 
     fun fieldSelected(row: Int, col: Int) {
