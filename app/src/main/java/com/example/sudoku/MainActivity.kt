@@ -9,6 +9,8 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.GenericShape
 import androidx.compose.material.*
 import androidx.compose.material.ButtonDefaults.buttonColors
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
@@ -153,7 +155,8 @@ fun SudokuButton(
                                 Column(modifier = modifier
                                     .requiredWidth(10.dp)
                                     .wrapContentSize(
-                                        Alignment.Center)
+                                        Alignment.Center
+                                    )
                                 ) {
                                     Text(
                                         text = sudokuField!!.notes[i * 3 + j] ?: "",
@@ -185,6 +188,21 @@ fun Game(
             .wrapContentSize(Alignment.Center),
         horizontalAlignment = Alignment.CenterHorizontally
     ){
+        Row (
+            modifier = Modifier.fillMaxWidth()
+                .padding(start = 15.dp),
+            horizontalArrangement = Arrangement.Start
+        ) {
+            Button(
+                onClick = { sudokuGame.newGame() }
+            ) {
+                Icon(
+                    Icons.Filled.Refresh,
+                    contentDescription = "New Game",
+                    modifier = Modifier.size(ButtonDefaults.IconSize)
+                )
+            }
+        }
         Box()
         {
             Row(
