@@ -33,26 +33,6 @@ class SudokuLogic {
         solution = Array(9) { arrayOfNulls<String>(9) }
         makeSolution()
 
-//        var attempts = 3
-//        val sudoku = solution.copy()
-//        while (attempts > 0) {
-//            var row: Int
-//            var col: Int
-//
-//            do {
-//                row = Random.nextInt(0..8)
-//                col = Random.nextInt(0..8)
-//            } while(sudoku[row][col] == null)
-//            val backup = sudoku[row][col]
-//            sudoku[row][col] = null
-//
-//            val trySolve = sudoku.copy()
-//            if (checkNumSolutions(trySolve) != 1) {
-//                sudoku[row][col] = backup
-//                attempts -= 1
-//            }
-//        }
-
         var attempts = 3
         val sudoku = solution.copy()
         val backup = Stack<Triple<Int, Int, String?>>()
@@ -124,15 +104,7 @@ class SudokuLogic {
     fun fieldSelected(row: Int, col: Int) {
         currField = fields[row][col]
 
-        val fromRow = (kotlin.math.floor(row / 3.0) * 3).toInt()
-        val fromCol = (kotlin.math.floor(col / 3.0) * 3).toInt()
-
-        val rowArr = fields[row]
-        val colArr = Array(9) {fields[it][col]}
-        val square = fields[fromRow].slice(fromCol..(fromCol + 2)).toTypedArray() +
-                fields[fromRow + 1].slice(fromCol..(fromCol + 2)).toTypedArray() +
-                fields[fromRow + 2].slice(fromCol..(fromCol + 2)).toTypedArray()
-        val toBeHighlighted = rowArr + colArr + square
+        val toBeHighlighted = SudokuUtil.getRelevantValues(fields, row, col)
 
         if (lastHighlighted != null) {
             for (field in lastHighlighted!!) {
@@ -173,21 +145,15 @@ class SudokuLogic {
             if (solution[row][col] == null) {
                 symbols.shuffle()
                 for (value in symbols) {
-                    if (value !in solution[row] && value !in Array(9) { solution[it][col] }) {
-                        val fromRow = (kotlin.math.floor(row / 3.0) * 3).toInt()
-                        val fromCol = (kotlin.math.floor(col / 3.0) * 3).toInt()
-                        val square = solution[fromRow].slice(fromCol..(fromCol + 2)).toTypedArray() +
-                                solution[fromRow + 1].slice(fromCol..(fromCol + 2)).toTypedArray() +
-                                solution[fromRow + 2].slice(fromCol..(fromCol + 2)).toTypedArray()
-                        if (value !in square) {
-                            solution[row][col] = value
-                            if (checkGrid(solution)) {
-                                return true
-                            }
-                            else if (makeSolution()) {
-                                return true
-                            }
+                    if (value !in SudokuUtil.getRelevantValues(solution, row, col)) {
+                        solution[row][col] = value
+                        if (checkGrid(solution)) {
+                            return true
                         }
+                        else if (makeSolution()) {
+                            return true
+                        }
+
                     }
                 }
                 break
@@ -207,20 +173,14 @@ class SudokuLogic {
                 col = i % 9
                 if (grid[row][col] == null) {
                     for (value in symbols) {
-                        if (value !in grid[row] && value !in Array<String?>(9) { grid[it][col] }) {
-                            val fromRow = (kotlin.math.floor(row / 3.0) * 3).toInt()
-                            val fromCol = (kotlin.math.floor(col / 3.0) * 3).toInt()
-                            val square = grid[fromRow].slice(fromCol..(fromCol + 2)).toTypedArray() +
-                                    grid[fromRow + 1].slice(fromCol..(fromCol + 2)).toTypedArray() +
-                                    grid[fromRow + 2].slice(fromCol..(fromCol + 2)).toTypedArray()
-                            if (value !in square) {
-                                grid[row][col] = value
-                                if (checkGrid(grid)) {
-                                    numSolutions += 1
-                                    break
-                                }
-                                checkNumSolutionsRec(grid)
+                        if (value !in SudokuUtil.getRelevantValues(grid, row, col)) {
+                            grid[row][col] = value
+                            if (checkGrid(grid)) {
+                                numSolutions += 1
+                                break
                             }
+                            checkNumSolutionsRec(grid)
+
                         }
                     }
                     break
