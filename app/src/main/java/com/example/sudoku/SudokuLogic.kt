@@ -1,6 +1,7 @@
 package com.example.sudoku
 
 import androidx.lifecycle.MutableLiveData
+import java.util.*
 import kotlin.random.Random
 import kotlin.random.nextInt
 
@@ -32,8 +33,40 @@ class SudokuLogic {
         solution = Array(9) { arrayOfNulls<String>(9) }
         makeSolution()
 
+//        var attempts = 3
+//        val sudoku = solution.copy()
+//        while (attempts > 0) {
+//            var row: Int
+//            var col: Int
+//
+//            do {
+//                row = Random.nextInt(0..8)
+//                col = Random.nextInt(0..8)
+//            } while(sudoku[row][col] == null)
+//            val backup = sudoku[row][col]
+//            sudoku[row][col] = null
+//
+//            val trySolve = sudoku.copy()
+//            if (checkNumSolutions(trySolve) != 1) {
+//                sudoku[row][col] = backup
+//                attempts -= 1
+//            }
+//        }
+
         var attempts = 3
         val sudoku = solution.copy()
+        val backup = Stack<Triple<Int, Int, String?>>()
+
+        var initialNumbsTaken = 30
+        do {
+            val row = Random.nextInt(0..8)
+            val col = Random.nextInt(0..8)
+            if (sudoku[row][col] != null) {
+                backup.push(Triple(row, col, sudoku[row][col]))
+                initialNumbsTaken -= 1
+            }
+        } while(initialNumbsTaken > 0)
+
         while (attempts > 0) {
             var row: Int
             var col: Int
@@ -42,12 +75,13 @@ class SudokuLogic {
                 row = Random.nextInt(0..8)
                 col = Random.nextInt(0..8)
             } while(sudoku[row][col] == null)
-            val backup = sudoku[row][col]
+            backup.push(Triple(row, col, sudoku[row][col]))
             sudoku[row][col] = null
 
             val trySolve = sudoku.copy()
-            if (checkNumSolutions(trySolve) != 1) {
-                sudoku[row][col] = backup
+            while (checkNumSolutions(trySolve) != 1) {
+                val stackTop = backup.pop()
+                sudoku[stackTop.first][stackTop.second] = stackTop.third
                 attempts -= 1
             }
         }
