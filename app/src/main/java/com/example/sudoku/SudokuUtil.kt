@@ -30,5 +30,34 @@ class SudokuUtil {
                     grid[fromRow + 1].slice(fromCol..(fromCol + 2)).toTypedArray(),
                     grid[fromRow + 2].slice(fromCol..(fromCol + 2)).toTypedArray())
         }
+
+        inline fun<reified T> applyToRelevantValues(grid: Array<Array<T>>, row: Int, col: Int, transform: (T) -> T) {
+            applyToRow(grid, row, transform)
+            applyToColumn(grid, col, transform)
+            applyToSquare(grid, row, col, transform)
+        }
+
+        inline fun<reified T> applyToRow(grid: Array<Array<T>>, row: Int, transform: (T) -> T) {
+            for (i in grid[row].indices) {
+                grid[row][i] = transform(grid[row][i])
+            }
+        }
+
+        inline fun<reified T> applyToColumn(grid: Array<Array<T>>, col: Int, transform: (T) -> T) {
+            for (i in grid.indices) {
+                grid[i][col] = transform(grid[i][col])
+            }
+        }
+
+        inline fun<reified T> applyToSquare(grid: Array<Array<T>>, row: Int, col: Int, transform: (T) -> T) {
+            val fromRow = (kotlin.math.floor(row / 3.0) * 3).toInt()
+            val fromCol = (kotlin.math.floor(col / 3.0) * 3).toInt()
+
+            for (i in 0..2) {
+                for (j in 0..2) {
+                    grid[fromRow + i][fromCol + j] = transform(grid[fromRow + i][fromCol + j])
+                }
+            }
+        }
     }
 }
