@@ -3,7 +3,7 @@ package com.example.sudoku
 class SudokuUtil {
     companion object {
         inline fun<reified T> getRelevantValues(grid: Array<Array<T>>, row: Int, col: Int): Array<T> {
-            return getRow(grid, row) + getColumn(grid, col) + getSquare(grid, row, col)
+            return (getRow(grid, row) + getColumn(grid, col) + getSquare(grid, row, col)).toSet().toTypedArray() // dumb hack to remove duplicates (only works if T is class object)
         }
 
         inline fun<reified T> getRow(grid: Array<Array<T>>, row: Int): Array<T> {
@@ -32,21 +32,28 @@ class SudokuUtil {
         }
 
         inline fun<reified T> applyToRelevantValues(grid: Array<Array<T>>, row: Int, col: Int, transform: (T) -> T) {
-            applyToRow(grid, row, transform)
-            applyToColumn(grid, col, transform)
-            applyToSquare(grid, row, col, transform)
+            val fromRow = (kotlin.math.floor(row / 3.0) * 3).toInt()
+            val fromCol = (kotlin.math.floor(col / 3.0) * 3).toInt()
+
+            for (i in 0..2) {
+                for (j in 0..2) {
+                    grid[fromRow + i][fromCol + j] = transform(grid[fromRow + i][fromCol + j])
+                }
+            }
+
+            for (i in 0 until fromCol) grid[row][i] = transform(grid[row][i])
+            for (i in (fromCol + 3)..grid.size) grid[row][i] = transform(grid[row][i])
+
+            for (i in 0 until fromRow) grid[i][col] = transform(grid[i][col])
+            for (i in (fromRow + 3)..grid[0].size) grid[i][col] = transform(grid[i][col])
         }
 
         inline fun<reified T> applyToRow(grid: Array<Array<T>>, row: Int, transform: (T) -> T) {
-            for (i in grid[row].indices) {
-                grid[row][i] = transform(grid[row][i])
-            }
+            for (i in grid[row].indices) grid[row][i] = transform(grid[row][i])
         }
 
         inline fun<reified T> applyToColumn(grid: Array<Array<T>>, col: Int, transform: (T) -> T) {
-            for (i in grid.indices) {
-                grid[i][col] = transform(grid[i][col])
-            }
+            for (i in grid.indices) grid[i][col] = transform(grid[i][col])
         }
 
         inline fun<reified T> applyToSquare(grid: Array<Array<T>>, row: Int, col: Int, transform: (T) -> T) {
