@@ -140,7 +140,66 @@ class SudokuSolver {
         for (i in 0..2) {
             for (j in 0..2) {
                 val square = SudokuUtil.getSquareAsMat(candidates, i * 3, j * 3)
+                val rowCands = Array(3) { square[it].reduce { acc, num -> acc or num } }
+                val colCands = Array(3) { col ->
+                    Array(3) { row ->
+                        square[row][col]
+                    }.reduce { acc, num -> acc or num }
+                }
 
+                for (k in rowCands.indices) {
+                    val tempCands = rowCands[k]
+                    rowCands[k] = 0
+                    val otherRowsCands = rowCands.reduce { acc, num -> acc or num}
+                    rowCands[k] = tempCands
+
+                    val uniqueCands = (rowCands[k] xor otherRowsCands) and rowCands[k]
+                    if (uniqueCands > 0) {
+                        var eliminatedCands = false
+
+                        for (l in 0..2) {
+                            candidates[(i * 3) + k][(j * 3) + l] = 0
+                        }
+                        SudokuUtil.applyToRow(candidates, (i * 3) + k) {
+                            eliminatedCands = eliminatedCands || it and uniqueCands > 0
+                            it - (it and uniqueCands)
+                        }
+                        for (l in 0..2) {
+                            candidates[(i * 3) + k][(j * 3) + l] = square[k][l]
+                        }
+
+                        if (eliminatedCands) {
+                            return 200
+                        }
+                    }
+                }
+
+                for (k in colCands.indices) {
+                    val tempCands = colCands[k]
+                    colCands[k] = 0
+                    val otherColsCands = colCands.reduce { acc, num -> acc or num}
+                    colCands[k] = tempCands
+
+                    val uniqueCands = (colCands[k] xor otherColsCands) and colCands[k]
+                    if (uniqueCands > 0) {
+                        var eliminatedCands = false
+
+                        for (l in 0..2) {
+                            candidates[(i * 3) + l][(j * 3) + k] = 0
+                        }
+                        SudokuUtil.applyToColumn(candidates, (j * 3) + k) {
+                            eliminatedCands = eliminatedCands || it and uniqueCands > 0
+                            it - (it and uniqueCands)
+                        }
+                        for (l in 0..2) {
+                            candidates[(i * 3) + l][(j * 3) + k] = square[l][k]
+                        }
+
+                        if (eliminatedCands) {
+                            return 200
+                        }
+                    }
+                }
             }
         }
 
