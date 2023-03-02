@@ -1,5 +1,3 @@
 package com.example.sudoku
 
-class NoSolutionException : Exception {
-    constructor() : super()
-}
+class NoSolutionException(message: String): Exception(message)
