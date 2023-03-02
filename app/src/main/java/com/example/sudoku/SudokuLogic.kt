@@ -58,10 +58,11 @@ class SudokuLogic {
             backup.push(Triple(row, col, sudoku[row][col]))
             sudoku[row][col] = null
 
-            val trySolve = sudoku.copy()
+            var trySolve = sudoku.copy()
             while (checkNumSolutions(trySolve) != 1) {
                 val stackTop = backup.pop()
                 sudoku[stackTop.first][stackTop.second] = stackTop.third
+                trySolve = sudoku.copy()
                 attempts -= 1
             }
         }
