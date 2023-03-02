@@ -121,6 +121,7 @@ class SudokuSolver {
                         val uniqueCands = (candidates[row][col] xor cands) and candidates[row][col]
                         if (uniqueCands != 0 && (uniqueCands and (uniqueCands - 1)) == 0) {
                             addNumber(uniqueCands, row, col)
+                            difficultyScore += 100
                             break
                         } else if (uniqueCands != 0) {
                             throw NoSolutionException("Two numbers need to be in the same field")
