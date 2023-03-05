@@ -2,7 +2,7 @@ package com.example.sudoku
 
 class SudokuSolver {
     private val candidates = Array(9) { Array(9) { 0b111111111 } }
-    var grid: Array<Array<String?>>
+    private var grid: Array<Array<String?>>
 
     private val stringToBitMap = mapOf<String?, Int>(
         "1" to 0b1,
@@ -124,7 +124,7 @@ class SudokuSolver {
                             difficultyScore += 100
                             break
                         } else if (uniqueCands != 0) {
-                            throw NoSolutionException("Two numbers need to be in the same field")
+                            throw NoSolutionException("Single Position for multiple numbers")
                         }
                     }
                 }
@@ -135,8 +135,6 @@ class SudokuSolver {
     }
 
     fun candidateLines(): Int {
-        var difficultyScore = 0
-
         for (i in 0..2) {
             for (j in 0..2) {
                 val square = SudokuUtil.getSquareAsMat(candidates, i * 3, j * 3)
@@ -162,7 +160,7 @@ class SudokuSolver {
                         }
                         SudokuUtil.applyToRow(candidates, (i * 3) + k) {
                             eliminatedCands = eliminatedCands || it and uniqueCands > 0
-                            it - (it and uniqueCands)
+                            it and uniqueCands.inv()
                         }
                         for (l in 0..2) {
                             candidates[(i * 3) + k][(j * 3) + l] = square[k][l]
@@ -189,7 +187,7 @@ class SudokuSolver {
                         }
                         SudokuUtil.applyToColumn(candidates, (j * 3) + k) {
                             eliminatedCands = eliminatedCands || it and uniqueCands > 0
-                            it - (it and uniqueCands)
+                            it and uniqueCands.inv()
                         }
                         for (l in 0..2) {
                             candidates[(i * 3) + l][(j * 3) + k] = square[l][k]
@@ -203,6 +201,70 @@ class SudokuSolver {
             }
         }
 
-        return difficultyScore
+        return 0
+    }
+
+    fun boxLineReduction(): Int {
+        for (i in 0..2) {
+            for (j in 0..2) {
+                val square = SudokuUtil.getSquareAsMat(candidates, i * 3, j * 3)
+                val rowCands = Array(3) { square[it].reduce { acc, num -> acc or num } }
+                val colCands = Array(3) { col ->
+                    Array(3) { row ->
+                        square[row][col]
+                    }.reduce { acc, num -> acc or num }
+                }
+
+                for (k in rowCands.indices) {
+                    for (l in square.indices) {
+                        candidates[(i * 3) + k][(j * 3) + l] = 0
+                    }
+                    val outsideCands = SudokuUtil.getRow(candidates, (i * 3) + k).reduce {
+                        acc, num -> acc or num
+                    }
+
+                    val uniqueCands = (rowCands[k] xor outsideCands) and rowCands[k]
+                    var eliminatedCands = false
+                    SudokuUtil.applyToSquare(candidates, i * 3, j * 3) {
+                        eliminatedCands = eliminatedCands || it and uniqueCands > 0
+                        it and uniqueCands.inv()
+                    }
+
+                    for (l in square.indices) {
+                        candidates[(i * 3) + k][(j * 3) + l] = square[k][l]
+                    }
+
+                    if (eliminatedCands) {
+                        return 350
+                    }
+                }
+
+                for (k in colCands.indices) {
+                    for (l in square.indices) {
+                        candidates[(i * 3) + l][(j * 3) + k] = 0
+                    }
+                    val outsideCands = SudokuUtil.getColumn(candidates, (j * 3) + k).reduce {
+                            acc, num -> acc or num
+                    }
+
+                    val uniqueCands = (colCands[k] xor outsideCands) and colCands[k]
+                    var eliminatedCands = false
+                    SudokuUtil.applyToSquare(candidates, i * 3, j * 3) {
+                        eliminatedCands = eliminatedCands || it and uniqueCands > 0
+                        it and uniqueCands.inv()
+                    }
+
+                    for (l in square.indices) {
+                        candidates[(i * 3) + l][(j * 3) + k] = square[l][k]
+                    }
+
+                    if (eliminatedCands) {
+                        return 350
+                    }
+                }
+            }
+        }
+
+        return 0
     }
 }
