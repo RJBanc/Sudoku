@@ -23,6 +23,15 @@ class SudokuUtil {
                     grid[fromRow + 2].slice(fromCol..(fromCol + 2)).toTypedArray()
         }
 
+        inline fun<reified T> getSquare(grid: Array<Array<T>>, square: Int): Array<T> {
+            val fromRow = (kotlin.math.floor(square / 3.0) * 3).toInt()
+            val fromCol = (square % 3) * 3
+
+            return grid[fromRow].slice(fromCol..(fromCol + 2)).toTypedArray() +
+                    grid[fromRow + 1].slice(fromCol..(fromCol + 2)).toTypedArray() +
+                    grid[fromRow + 2].slice(fromCol..(fromCol + 2)).toTypedArray()
+        }
+
         inline fun<reified  T> getSquareAsMat(grid: Array<Array<T>>, row: Int, col: Int): Array<Array<T>> {
             val fromRow = (kotlin.math.floor(row / 3.0) * 3).toInt()
             val fromCol = (kotlin.math.floor(col / 3.0) * 3).toInt()

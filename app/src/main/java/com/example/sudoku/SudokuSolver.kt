@@ -89,7 +89,7 @@ class SudokuSolver {
 //        }
 //    }
 
-    fun singleCandidatePosition(): Int {
+    fun singleCandidate(): Int {
         var difficultyScore = 0
 
         for (row in 0..8) {
@@ -104,28 +104,49 @@ class SudokuSolver {
                 if ((candidates[row][col] and (candidates[row][col] - 1)) == 0) { // check if number is power of 2 (only one bit set): n & (n-1) == 0
                     addNumber(candidates[row][col], row, col)
                     difficultyScore += 100
-                } else {
-                    val tempCands = candidates[row][col]
-                    candidates[row][col] = 0
+                }
+            }
+        }
 
-                    val rowCands = SudokuUtil.getRow(candidates, row).reduce {
-                            acc, cand -> acc or cand }
-                    val colCands = SudokuUtil.getColumn(candidates, col).reduce {
-                            acc, cand -> acc or cand }
-                    val squareCands = SudokuUtil.getSquare(candidates, row, col).reduce {
-                            acc, cand -> acc or cand }
+        return difficultyScore
+    }
 
-                    candidates[row][col] = tempCands
+    fun singlePosition(): Int {
+        var difficultyScore = 0
 
-                    for (cands in arrayOf(rowCands, colCands, squareCands)) {
-                        val uniqueCands = (candidates[row][col] xor cands) and candidates[row][col]
-                        if (uniqueCands != 0 && (uniqueCands and (uniqueCands - 1)) == 0) {
-                            addNumber(uniqueCands, row, col)
+        for (i in 0..8) {
+            for ((arrIndex, arr) in arrayOf(
+                SudokuUtil.getRow(candidates, i),
+                SudokuUtil.getColumn(candidates, i),
+                SudokuUtil.getSquare(candidates, i)).withIndex()
+            ) {
+                var duplicateCandidates = 0
+                var uniqueCands = arr.reduce { acc, num ->
+                    duplicateCandidates = duplicateCandidates or (acc and num)
+                    (acc xor num) and duplicateCandidates.inv()
+                }
+
+                if (uniqueCands > 0) {
+                    for ((candsIndex, cands) in arr.withIndex()) {
+                        val matchingCands = cands and uniqueCands
+                        if ((matchingCands > 0) && (matchingCands and (matchingCands - 1) == 0)) {
+                            when (arrIndex) {
+                                0 -> addNumber(matchingCands, i, candsIndex)
+                                1 -> addNumber(matchingCands, candsIndex, i)
+                                2 -> {
+                                    addNumber(matchingCands,
+                                        (kotlin.math.floor(i / 3.0) * 3).toInt() +
+                                                (kotlin.math.floor(candsIndex / 3.0)).toInt(),
+                                        (i % 3) * 3 + (candsIndex % 3)
+                                    )
+                                }
+                            }
                             difficultyScore += 100
-                            break
-                        } else if (uniqueCands != 0) {
+                            uniqueCands -= cands
+                        } else if (matchingCands > 0)
                             throw NoSolutionException("Single Position for multiple numbers")
-                        }
+
+                        if (uniqueCands == 0) break
                     }
                 }
             }
@@ -225,9 +246,11 @@ class SudokuSolver {
 
                     val uniqueCands = (rowCands[k] xor outsideCands) and rowCands[k]
                     var eliminatedCands = false
-                    SudokuUtil.applyToSquare(candidates, i * 3, j * 3) {
-                        eliminatedCands = eliminatedCands || it and uniqueCands > 0
-                        it and uniqueCands.inv()
+                    if (uniqueCands > 0) {
+                        SudokuUtil.applyToSquare(candidates, i * 3, j * 3) {
+                            eliminatedCands = eliminatedCands || it and uniqueCands > 0
+                            it and uniqueCands.inv()
+                        }
                     }
 
                     for (l in square.indices) {
@@ -249,9 +272,11 @@ class SudokuSolver {
 
                     val uniqueCands = (colCands[k] xor outsideCands) and colCands[k]
                     var eliminatedCands = false
-                    SudokuUtil.applyToSquare(candidates, i * 3, j * 3) {
-                        eliminatedCands = eliminatedCands || it and uniqueCands > 0
-                        it and uniqueCands.inv()
+                    if (uniqueCands > 0) {
+                        SudokuUtil.applyToSquare(candidates, i * 3, j * 3) {
+                            eliminatedCands = eliminatedCands || it and uniqueCands > 0
+                            it and uniqueCands.inv()
+                        }
                     }
 
                     for (l in square.indices) {
@@ -262,6 +287,26 @@ class SudokuSolver {
                         return 350
                     }
                 }
+            }
+        }
+
+        return 0
+    }
+
+    fun nakedPair(): Int {
+        for (row in 0..8) {
+            for (col in 0..8) {
+                if (grid[row][col] != null) continue
+
+                var candidatesCount = 0
+                var candidatesCopy = candidates[row][col]
+                while (candidatesCopy != 0) { //count how many bits are set in candidatesCopy
+                    candidatesCopy = candidatesCopy and (candidatesCopy - 1)
+                    candidatesCount++
+                }
+                if (candidatesCount != 2) continue
+
+
             }
         }
 
