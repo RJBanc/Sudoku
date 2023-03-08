@@ -101,7 +101,7 @@ class SudokuSolver {
                 if (candidates[row][col] == 0) {
                     throw NoSolutionException("Empty field has no possible candidates")
                 }
-                if ((candidates[row][col] and (candidates[row][col] - 1)) == 0) { // check if number is power of 2 (only one bit set): n & (n-1) == 0
+                if (BitUtil.isPowerOfTwo(candidates[row][col])) {
                     addNumber(candidates[row][col], row, col)
                     difficultyScore += 100
                 }
@@ -174,16 +174,16 @@ class SudokuSolver {
                     val otherRowsCands = rowCands.reduce { acc, num -> acc or num}
                     rowCands[k] = tempCands
 
-                    val uniqueCands = (rowCands[k] xor otherRowsCands) and rowCands[k]
+                    val uniqueCands = BitUtil.uniqueBits(rowCands[k], otherRowsCands)
                     if (uniqueCands == 0) continue
 
-                    var eliminatedCands = false
                     for (l in 0..2) {
                         candidates[(i * 3) + k][(j * 3) + l] = 0
                     }
+                    var eliminatedCands = false
                     SudokuUtil.applyToRow(candidates, (i * 3) + k) {
                         eliminatedCands = eliminatedCands || it and uniqueCands > 0
-                        it and uniqueCands.inv()
+                        BitUtil.removeBits(it, uniqueCands)
                     }
                     for (l in 0..2) {
                         candidates[(i * 3) + k][(j * 3) + l] = square[k][l]
@@ -200,16 +200,16 @@ class SudokuSolver {
                     val otherColsCands = colCands.reduce { acc, num -> acc or num}
                     colCands[k] = tempCands
 
-                    val uniqueCands = (colCands[k] xor otherColsCands) and colCands[k]
+                    val uniqueCands = BitUtil.uniqueBits(colCands[k], otherColsCands)
                     if (uniqueCands == 0) continue
 
-                    var eliminatedCands = false
                     for (l in 0..2) {
                         candidates[(i * 3) + l][(j * 3) + k] = 0
                     }
+                    var eliminatedCands = false
                     SudokuUtil.applyToColumn(candidates, (j * 3) + k) {
                         eliminatedCands = eliminatedCands || it and uniqueCands > 0
-                        it and uniqueCands.inv()
+                        BitUtil.removeBits(it, uniqueCands)
                     }
                     for (l in 0..2) {
                         candidates[(i * 3) + l][(j * 3) + k] = square[l][k]
@@ -244,12 +244,12 @@ class SudokuSolver {
                         acc, num -> acc or num
                     }
 
-                    val uniqueCands = (rowCands[k] xor outsideCands) and rowCands[k]
+                    val uniqueCands = BitUtil.uniqueBits(rowCands[k], outsideCands)
                     var eliminatedCands = false
                     if (uniqueCands > 0) {
                         SudokuUtil.applyToSquare(candidates, i * 3, j * 3) {
                             eliminatedCands = eliminatedCands || it and uniqueCands > 0
-                            it and uniqueCands.inv()
+                            BitUtil.removeBits(it, uniqueCands)
                         }
                     }
 
@@ -270,12 +270,12 @@ class SudokuSolver {
                             acc, num -> acc or num
                     }
 
-                    val uniqueCands = (colCands[k] xor outsideCands) and colCands[k]
+                    val uniqueCands = BitUtil.uniqueBits(colCands[k], outsideCands)
                     var eliminatedCands = false
                     if (uniqueCands > 0) {
                         SudokuUtil.applyToSquare(candidates, i * 3, j * 3) {
                             eliminatedCands = eliminatedCands || it and uniqueCands > 0
-                            it and uniqueCands.inv()
+                            BitUtil.removeBits(it, uniqueCands)
                         }
                     }
 
@@ -294,19 +294,13 @@ class SudokuSolver {
     }
 
     fun nakedPair(): Int {
-        for (row in 0..8) {
-            for (col in 0..8) {
-                if (grid[row][col] != null) continue
-
-                var candidatesCount = 0
-                var candidatesCopy = candidates[row][col]
-                while (candidatesCopy != 0) { //count how many bits are set in candidatesCopy
-                    candidatesCopy = candidatesCopy and (candidatesCopy - 1)
-                    candidatesCount++
-                }
-                if (candidatesCount != 2) continue
-
-
+        for (i in 0..8) {
+            for ((arrIndex, arr) in arrayOf(
+                SudokuUtil.getRow(candidates, i),
+                SudokuUtil.getColumn(candidates, i),
+                SudokuUtil.getSquare(candidates, i)).withIndex()
+            ) {
+                val potentialPairs = emptyList<Int>()
             }
         }
 
