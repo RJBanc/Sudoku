@@ -11,7 +11,7 @@ class SudokuLogic {
     private var solution: Array<Array<String?>>
     private val symbols = arrayOf("1", "2", "3", "4", "5", "6", "7", "8", "9")
     private var lastHighlighted: Array<MutableLiveData<SudokuField>>? = null
-    private var currField: MutableLiveData<SudokuField>? = null
+    private var currFieldCoords: Pair<Int, Int>? = null
 
     constructor() {
         fields  = Array(9) {
@@ -86,24 +86,35 @@ class SudokuLogic {
     }
 
     fun setFieldNumber(s: String, isNote: Boolean) {
-        if (currField != null) {
-            if (isNote) {
-                val notes = currField!!.value!!.notes.clone()
-                notes[s.toInt() - 1] = if(notes[s.toInt() - 1] == null) s else null
-                currField!!.postValue(currField!!.value!!.copy(
-                    notes = notes
-                ))
-            } else {
-                currField!!.postValue(currField!!.value!!.copy(
-                    number = if(currField!!.value!!.number != s) s else null,
-                    notes = currField!!.value!!.notes.clone()
-                ))
+        if (currFieldCoords == null) return
+        val currField = fields[currFieldCoords!!.first][currFieldCoords!!.second]
+
+        if (isNote) {
+            val notes = currField.value!!.notes.clone()
+            notes[s.toInt() - 1] = if(notes[s.toInt() - 1] == null) s else null
+            currField.postValue(currField.value!!.copy(
+                notes = notes
+            ))
+        } else {
+            currField.postValue(
+                currField.value!!.copy(
+                number = if(currField.value!!.number != s) s else null,
+                notes = currField.value!!.notes.clone()
+            ))
+            for (field in SudokuUtil.getRelevantValues(fields, currFieldCoords!!.first, currFieldCoords!!.second)) {
+                val newNotes = field.value!!.notes.clone()
+                newNotes[s.toInt() - 1] = null
+                field.postValue(
+                    field.value!!.copy(
+                        notes = newNotes
+                    )
+                )
             }
         }
     }
 
     fun fieldSelected(row: Int, col: Int) {
-        currField = fields[row][col]
+        currFieldCoords = Pair(row, col)
 
         val toBeHighlighted = SudokuUtil.getRelevantValues(fields, row, col)
 
