@@ -39,7 +39,7 @@ class SudokuSolver {
 
                 candidates[row][col] = 0
                 SudokuUtil.applyToRelevantValues(candidates, row, col) {
-                    it and stringToBitMap.getValue(grid[row][col]).inv() //remove number as candidate from relevant fields
+                    BitUtil.removeBits(it, stringToBitMap.getValue(grid[row][col]))
                 }
             }
         }
@@ -300,7 +300,36 @@ class SudokuSolver {
                 SudokuUtil.getColumn(candidates, i),
                 SudokuUtil.getSquare(candidates, i)).withIndex()
             ) {
-                val potentialPairs = emptyList<Int>()
+                val potentialPairs = mutableListOf<Int>()
+                for (num in arr) {
+                    if (BitUtil.countBits(num) != 2) continue
+
+                    if (num in potentialPairs) {
+                        when (arrIndex) {
+                            0 -> SudokuUtil.applyToRow(candidates, i) {
+                                if (it != num)
+                                    BitUtil.removeBits(it, num)
+                                else
+                                    it
+                            }
+                            1 -> SudokuUtil.applyToColumn(candidates, i) {
+                                if (it != num)
+                                    BitUtil.removeBits(it, num)
+                                else
+                                    it
+                            }
+                            2 -> SudokuUtil.applyToSquare(candidates, i) {
+                                if (it != num)
+                                    BitUtil.removeBits(it, num)
+                                else
+                                    it
+                            }
+                        }
+                        return 500
+                    }
+
+                    potentialPairs.add(num)
+                }
             }
         }
 

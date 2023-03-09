@@ -75,5 +75,16 @@ class SudokuUtil {
                 }
             }
         }
+
+        inline fun<reified T> applyToSquare(grid: Array<Array<T>>, square: Int, transform: (T) -> T) {
+            val fromRow = (kotlin.math.floor(square / 3.0) * 3).toInt()
+            val fromCol = (square % 3) * 3
+
+            for (i in 0..2) {
+                for (j in 0..2) {
+                    grid[fromRow + i][fromCol + j] = transform(grid[fromRow + i][fromCol + j])
+                }
+            }
+        }
     }
 }
