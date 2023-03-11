@@ -20,6 +20,14 @@ class BitUtil {
             return (potentialUnique xor uniqueFrom) and potentialUnique
         }
 
+        fun uniqueBits(arr: Array<Int>): Int {
+            var duplicateCandidates = 0
+            return arr.reduce { acc, num ->
+                duplicateCandidates = duplicateCandidates or (acc and num)
+                (acc xor num) and duplicateCandidates.inv()
+            }
+        }
+
         fun removeBits(removeFrom: Int, bits: Int): Int {
             return removeFrom and bits.inv()
         }
