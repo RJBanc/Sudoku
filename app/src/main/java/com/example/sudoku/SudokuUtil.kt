@@ -32,6 +32,14 @@ class SudokuUtil {
                     grid[fromRow + 2].slice(fromCol..(fromCol + 2)).toTypedArray()
         }
 
+        fun getCoordsInSqaure(squareIndex: Int, posIndex: Int): Pair<Int, Int> {
+            val row = (kotlin.math.floor(squareIndex / 3.0) * 3).toInt() +
+                    (kotlin.math.floor(posIndex / 3.0)).toInt()
+            val col = (squareIndex % 3) * 3 + (posIndex % 3)
+
+            return Pair(row, col)
+        }
+
         inline fun<reified  T> getSquareAsMat(grid: Array<Array<T>>, row: Int, col: Int): Array<Array<T>> {
             val fromRow = (kotlin.math.floor(row / 3.0) * 3).toInt()
             val fromCol = (kotlin.math.floor(col / 3.0) * 3).toInt()

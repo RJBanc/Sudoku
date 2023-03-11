@@ -120,11 +120,7 @@ class SudokuSolver {
                 SudokuUtil.getColumn(candidates, i),
                 SudokuUtil.getSquare(candidates, i)).withIndex()
             ) {
-                var duplicateCandidates = 0
-                var uniqueCands = arr.reduce { acc, num ->
-                    duplicateCandidates = duplicateCandidates or (acc and num)
-                    (acc xor num) and duplicateCandidates.inv()
-                }
+                var uniqueCands = BitUtil.uniqueBits(arr)
 
                 if (uniqueCands == 0) continue
 
@@ -138,11 +134,8 @@ class SudokuSolver {
                         0 -> addNumber(matchingCands, i, candsIndex)
                         1 -> addNumber(matchingCands, candsIndex, i)
                         2 -> {
-                            addNumber(matchingCands,
-                                (kotlin.math.floor(i / 3.0) * 3).toInt() +
-                                        (kotlin.math.floor(candsIndex / 3.0)).toInt(),
-                                (i % 3) * 3 + (candsIndex % 3)
-                            )
+                            val coords = SudokuUtil.getCoordsInSqaure(i, candsIndex)
+                            addNumber(matchingCands, coords.first, coords.second)
                         }
                     }
                     difficultyScore += 100
@@ -329,6 +322,49 @@ class SudokuSolver {
                     }
 
                     potentialPairs.add(num)
+                }
+            }
+        }
+
+        return 0
+    }
+
+    fun hiddenPair(): Int {
+        for (i in 0..8) {
+            for ((arrindex, arr) in arrayOf(
+                SudokuUtil.getRow(candidates, i),
+                SudokuUtil.getColumn(candidates, i),
+                SudokuUtil.getSquare(candidates, i)).withIndex()
+            ) {
+                for (numIndex in 0 until (arr.size - 1)) {
+                    val rest = arr.slice((numIndex + 1) until arr.size).toTypedArray()
+                    val uniqueCands = BitUtil.uniqueBits(rest)
+
+                    if (uniqueCands != 2) continue
+                    if (uniqueCands and arr[numIndex] != uniqueCands) continue
+
+                    for (otherIndex in (numIndex + 1) until arr.size) {
+                        if (arr[otherIndex] and uniqueCands != uniqueCands) continue
+
+                        when (arrindex) {
+                            0 -> {
+                                candidates[i][numIndex] = uniqueCands
+                                candidates[i][otherIndex] = uniqueCands
+                            }
+                            1 -> {
+                                candidates[numIndex][i] = uniqueCands
+                                candidates[otherIndex][i] = uniqueCands
+                            }
+                            2 -> {
+                                val coordsNum = SudokuUtil.getCoordsInSqaure(i, numIndex)
+                                val coordsOther = SudokuUtil.getCoordsInSqaure(i, otherIndex)
+                                candidates[coordsNum.first][coordsNum.second] = uniqueCands
+                                candidates[coordsOther.first][coordsOther.second] = uniqueCands
+                            }
+                        }
+
+                        return 1200
+                    }
                 }
             }
         }
