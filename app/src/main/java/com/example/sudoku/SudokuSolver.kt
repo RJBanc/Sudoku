@@ -182,9 +182,8 @@ class SudokuSolver {
                         candidates[(i * 3) + k][(j * 3) + l] = square[k][l]
                     }
 
-                    if (eliminatedCands) {
+                    if (eliminatedCands)
                         return 200
-                    }
                 }
 
                 for (k in colCands.indices) {
@@ -208,9 +207,8 @@ class SudokuSolver {
                         candidates[(i * 3) + l][(j * 3) + k] = square[l][k]
                     }
 
-                    if (eliminatedCands) {
+                    if (eliminatedCands)
                         return 200
-                    }
                 }
             }
         }
@@ -250,9 +248,8 @@ class SudokuSolver {
                         candidates[(i * 3) + k][(j * 3) + l] = square[k][l]
                     }
 
-                    if (eliminatedCands) {
+                    if (eliminatedCands)
                         return 350
-                    }
                 }
 
                 for (k in colCands.indices) {
@@ -276,9 +273,8 @@ class SudokuSolver {
                         candidates[(i * 3) + l][(j * 3) + k] = square[l][k]
                     }
 
-                    if (eliminatedCands) {
+                    if (eliminatedCands)
                         return 350
-                    }
                 }
             }
         }
@@ -298,27 +294,24 @@ class SudokuSolver {
                     if (BitUtil.countBits(num) != 2) continue
 
                     if (num in potentialPairs) {
-                        when (arrIndex) {
-                            0 -> SudokuUtil.applyToRow(candidates, i) {
-                                if (it != num)
-                                    BitUtil.removeBits(it, num)
-                                else
-                                    it
+                        var eliminatedCands = false
+                        val transform: (Int) -> Int = {
+                            if (it != num && it and num > 0) {
+                                eliminatedCands = true
+                                BitUtil.removeBits(it, num)
                             }
-                            1 -> SudokuUtil.applyToColumn(candidates, i) {
-                                if (it != num)
-                                    BitUtil.removeBits(it, num)
-                                else
-                                    it
-                            }
-                            2 -> SudokuUtil.applyToSquare(candidates, i) {
-                                if (it != num)
-                                    BitUtil.removeBits(it, num)
-                                else
-                                    it
-                            }
+                            else
+                                it
                         }
-                        return 500
+
+                        when (arrIndex) {
+                            0 -> SudokuUtil.applyToRow(candidates, i, transform)
+                            1 -> SudokuUtil.applyToColumn(candidates, i, transform)
+                            2 -> SudokuUtil.applyToSquare(candidates, i, transform)
+                        }
+
+                        if (eliminatedCands)
+                            return 500
                     }
 
                     potentialPairs.add(num)
@@ -345,6 +338,8 @@ class SudokuSolver {
 
                     for (otherIndex in (numIndex + 1) until arr.size) {
                         if (arr[otherIndex] and uniqueCands != uniqueCands) continue
+                        if (BitUtil.countBits(arr[otherIndex]) < 3 &&
+                            BitUtil.countBits(arr[numIndex]) < 3) break
 
                         when (arrindex) {
                             0 -> {
@@ -368,6 +363,12 @@ class SudokuSolver {
                 }
             }
         }
+
+        return 0
+    }
+
+    fun nakedTriple(): Int {
+
 
         return 0
     }
