@@ -368,7 +368,45 @@ class SudokuSolver {
     }
 
     fun nakedTriple(): Int {
+        for (i in 0..8) {
+            for ((arrindex, arr) in arrayOf(
+                SudokuUtil.getRow(candidates, i),
+                SudokuUtil.getColumn(candidates, i),
+                SudokuUtil.getSquare(candidates, i)).withIndex()
+            ) {
+                val potentialTriplets: MutableList<Pair<Int, Int>> = mutableListOf()
+                for (num in arr) {
+                    if (BitUtil.countBits(num) > 3) continue
+                    for (pair in potentialTriplets) {
+                        if (BitUtil.countBits(pair.first or num) > 3) continue
+                        if (pair.second == 1) {
+                            val extendPair = Pair(pair.first or num, 2)
+                            potentialTriplets.add(0, extendPair)
+                            continue
+                        }
 
+                        var eliminatedCands = false
+                        val transform: (Int) -> Int = {
+                            if (BitUtil.countBits(it or pair.first or num) < 4)
+                                it
+                            else {
+                                eliminatedCands = true
+                                BitUtil.removeBits(it, pair.first or num)
+                            }
+                        }
+                        when (arrindex) {
+                            0 -> SudokuUtil.applyToRow(candidates, i, transform)
+                            1 -> SudokuUtil.applyToColumn(candidates, i, transform)
+                            2 -> SudokuUtil.applyToSquare(candidates, i, transform)
+                        }
+                        if (eliminatedCands)
+                            return 1400
+                    }
+                    val newPotential = Pair(num, 1)
+                    potentialTriplets.add(newPotential)
+                }
+            }
+        }
 
         return 0
     }
