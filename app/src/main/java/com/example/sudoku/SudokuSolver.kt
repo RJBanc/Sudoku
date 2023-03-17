@@ -49,7 +49,7 @@ class SudokuSolver {
         grid[row][col] = numb
         candidates[row][col] = 0
         SudokuUtil.applyToRelevantValues(candidates, row, col) {
-            it and stringToBitMap.getValue(numb).inv()
+            BitUtil.removeBits(it, stringToBitMap.getValue(numb))
         }
     }
 
@@ -57,7 +57,7 @@ class SudokuSolver {
         grid[row][col] = bitToStringMap.getValue(numb)
         candidates[row][col] = 0
         SudokuUtil.applyToRelevantValues(candidates, row, col) {
-            it and numb.inv()
+            BitUtil.removeBits(it, numb)
         }
     }
 
@@ -324,7 +324,7 @@ class SudokuSolver {
 
     fun hiddenPair(): Int {
         for (i in 0..8) {
-            for ((arrindex, arr) in arrayOf(
+            for ((arrIndex, arr) in arrayOf(
                 SudokuUtil.getRow(candidates, i),
                 SudokuUtil.getColumn(candidates, i),
                 SudokuUtil.getSquare(candidates, i)).withIndex()
@@ -341,7 +341,7 @@ class SudokuSolver {
                         if (BitUtil.countBits(arr[otherIndex]) < 3 &&
                             BitUtil.countBits(arr[numIndex]) < 3) break
 
-                        when (arrindex) {
+                        when (arrIndex) {
                             0 -> {
                                 candidates[i][numIndex] = uniqueCands
                                 candidates[i][otherIndex] = uniqueCands
@@ -369,7 +369,7 @@ class SudokuSolver {
 
     fun nakedTriple(): Int {
         for (i in 0..8) {
-            for ((arrindex, arr) in arrayOf(
+            for ((arrIndex, arr) in arrayOf(
                 SudokuUtil.getRow(candidates, i),
                 SudokuUtil.getColumn(candidates, i),
                 SudokuUtil.getSquare(candidates, i)).withIndex()
@@ -394,7 +394,7 @@ class SudokuSolver {
                                 BitUtil.removeBits(it, pair.first or num)
                             }
                         }
-                        when (arrindex) {
+                        when (arrIndex) {
                             0 -> SudokuUtil.applyToRow(candidates, i, transform)
                             1 -> SudokuUtil.applyToColumn(candidates, i, transform)
                             2 -> SudokuUtil.applyToSquare(candidates, i, transform)
@@ -403,6 +403,87 @@ class SudokuSolver {
                             return 1400
                     }
                     val newPotential = Pair(num, 1)
+                    potentialTriplets.add(newPotential)
+                }
+            }
+        }
+
+        return 0
+    }
+
+    fun hiddenTriple(): Int {
+        for (i in 0..8) {
+            for ((arrIndex, arr) in arrayOf(
+                SudokuUtil.getRow(candidates, i),
+                SudokuUtil.getColumn(candidates, i),
+                SudokuUtil.getSquare(candidates, i)).withIndex()
+            ) {
+                val cellsPerNum = Array(9) {0}
+                for (i in arr.indices) {
+                    for (j in cellsPerNum.indices) {
+                        if ((arr[i] ushr j) and 1 == 1)
+                            cellsPerNum[j] = cellsPerNum[j] or (1 shl i)
+                    }
+                }
+
+                val potentialTriplets: MutableList<Triple<Int, Int, Int>> = mutableListOf()
+                for ((num, cells) in cellsPerNum.withIndex()) { //num ist die zahl - 1
+                    if (BitUtil.countBits(cells) > 3) continue
+                    for (triple in potentialTriplets) {
+                        if (BitUtil.countBits(triple.first or cells) > 3) continue
+
+                        val extendTriple = Triple(
+                            triple.first or cells,
+                            triple.second +  1,
+                            triple.third or (1 shl num)
+                        )
+                        if (extendTriple.second == 2) {
+                            potentialTriplets.add(0, extendTriple)
+                            continue
+                        }
+
+                        var eliminatedCands = false
+
+                        for (tripleCells in BitUtil.listBitsSet(extendTriple.first)) {
+                            when (arrIndex) {
+                                0 -> {
+                                    val newCands = BitUtil.removeBits(
+                                        candidates[i][tripleCells],
+                                        extendTriple.third.inv()
+                                    )
+                                    eliminatedCands = eliminatedCands or
+                                        (candidates[i][tripleCells] != newCands)
+
+                                    candidates[i][tripleCells] = newCands
+                                }
+                                1 -> {
+                                    val newCands = BitUtil.removeBits(
+                                        candidates[tripleCells][i],
+                                        extendTriple.third.inv()
+                                    )
+                                    eliminatedCands = eliminatedCands or
+                                        (candidates[tripleCells][i] != newCands)
+
+                                    candidates[tripleCells][i] = newCands
+                                }
+                                2 -> {
+                                    val coordsNum = SudokuUtil.getCoordsInSqaure(i, tripleCells)
+                                    val newCands = BitUtil.removeBits(
+                                        candidates[coordsNum.first][coordsNum.second],
+                                        extendTriple.third.inv()
+                                    )
+                                    eliminatedCands = eliminatedCands or
+                                        (candidates[coordsNum.first][coordsNum.second] != newCands)
+
+                                    candidates[coordsNum.first][coordsNum.second] = newCands
+                                }
+                            }
+                        }
+
+                        if (eliminatedCands)
+                            return 1600
+                    }
+                    val newPotential = Triple(cells, 1, 1 shl num)
                     potentialTriplets.add(newPotential)
                 }
             }
