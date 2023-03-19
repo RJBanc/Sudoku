@@ -1,7 +1,6 @@
 package com.example.sudoku
 
 import androidx.lifecycle.MutableLiveData
-import java.util.*
 import kotlin.random.Random
 import kotlin.random.nextInt
 
@@ -35,14 +34,14 @@ class SudokuLogic {
 
         var attempts = 3
         val sudoku = solution.copy()
-        val backup = Stack<Triple<Int, Int, String?>>()
+        val backup = ArrayDeque<Triple<Int, Int, String?>>()
 
         var initialNumbsTaken = 30
         do {
             val row = Random.nextInt(0..8)
             val col = Random.nextInt(0..8)
             if (sudoku[row][col] != null) {
-                backup.push(Triple(row, col, sudoku[row][col]))
+                backup.addLast(Triple(row, col, sudoku[row][col]))
                 initialNumbsTaken -= 1
             }
         } while(initialNumbsTaken > 0)
@@ -55,12 +54,12 @@ class SudokuLogic {
                 row = Random.nextInt(0..8)
                 col = Random.nextInt(0..8)
             } while(sudoku[row][col] == null)
-            backup.push(Triple(row, col, sudoku[row][col]))
+            backup.addLast(Triple(row, col, sudoku[row][col]))
             sudoku[row][col] = null
 
             var trySolve = sudoku.copy()
             while (checkNumSolutions(trySolve) != 1) {
-                val stackTop = backup.pop()
+                val stackTop = backup.removeLast()
                 sudoku[stackTop.first][stackTop.second] = stackTop.third
                 trySolve = sudoku.copy()
                 attempts -= 1
