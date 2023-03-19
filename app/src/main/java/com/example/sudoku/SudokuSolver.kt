@@ -451,7 +451,7 @@ class SudokuSolver {
                                         candidates[i][tripleCells],
                                         extendTriple.third.inv()
                                     )
-                                    eliminatedCands = eliminatedCands or
+                                    eliminatedCands = eliminatedCands ||
                                         (candidates[i][tripleCells] != newCands)
 
                                     candidates[i][tripleCells] = newCands
@@ -461,7 +461,7 @@ class SudokuSolver {
                                         candidates[tripleCells][i],
                                         extendTriple.third.inv()
                                     )
-                                    eliminatedCands = eliminatedCands or
+                                    eliminatedCands = eliminatedCands ||
                                         (candidates[tripleCells][i] != newCands)
 
                                     candidates[tripleCells][i] = newCands
@@ -472,7 +472,7 @@ class SudokuSolver {
                                         candidates[coordsNum.first][coordsNum.second],
                                         extendTriple.third.inv()
                                     )
-                                    eliminatedCands = eliminatedCands or
+                                    eliminatedCands = eliminatedCands ||
                                         (candidates[coordsNum.first][coordsNum.second] != newCands)
 
                                     candidates[coordsNum.first][coordsNum.second] = newCands
@@ -485,6 +485,87 @@ class SudokuSolver {
                     }
                     val newPotential = Triple(cells, 1, 1 shl num)
                     potentialTriplets.add(newPotential)
+                }
+            }
+        }
+
+        return 0
+    }
+
+    fun xWing(): Int {
+        val cellsPerNumRows = Array(9) { num ->
+            Array(9) { rowIndex ->
+                var cells = 0
+                for ((cellIndex, cell) in SudokuUtil.getRow(candidates, rowIndex).withIndex()) {
+                    if ((cell ushr num) and 1 == 1)
+                        cells = cells or (1 shl cellIndex)
+                }
+                cells
+            }
+        }
+
+        for ((num, numRow) in cellsPerNumRows.withIndex()) {
+            for (i in 0..7) {
+                if (BitUtil.countBits(numRow[i]) != 2) continue
+                for (j in (i + 1)..8) {
+                    if (numRow[i] != numRow[j]) continue
+
+                    var eliminatedCands = false
+                    var index = -1
+                    for (col in BitUtil.listBitsSet(numRow[i])) {
+                        SudokuUtil.applyToColumn(candidates, col) {
+                            index++
+                            if (index == i || index == j) {
+                                it
+                            }
+                            else {
+                                eliminatedCands = eliminatedCands || (it ushr num) and 1 == 1
+                                BitUtil.removeBits(it, 1 shl num)
+                            }
+                        }
+                    }
+
+                    if (eliminatedCands)
+                        return 1600
+                }
+            }
+        }
+
+
+        val cellsPerNumCols = Array(9) { num ->
+            Array(9) { colIndex ->
+                var cells = 0
+                for ((cellIndex, cell) in SudokuUtil.getColumn(candidates, colIndex).withIndex()) {
+                    if ((cell ushr num) and 1 == 1)
+                        cells = cells or (1 shl cellIndex)
+                }
+                cells
+            }
+        }
+
+        for ((num, numCol) in cellsPerNumCols.withIndex()) {
+            for (i in 0..7) {
+                if (BitUtil.countBits(numCol[i]) != 2) continue
+                for (j in (i + 1)..8) {
+                    if (numCol[i] != numCol[j]) continue
+
+                    var eliminatedCands = false
+                    var index = -1
+                    for (row in BitUtil.listBitsSet(numCol[i])) {
+                        SudokuUtil.applyToRow(candidates, row) {
+                            index++
+                            if (index == i || index == j) {
+                                it
+                            }
+                            else {
+                                eliminatedCands = eliminatedCands || (it ushr num) and 1 == 1
+                                BitUtil.removeBits(it, 1 shl num)
+                            }
+                        }
+                    }
+
+                    if (eliminatedCands)
+                        return 1600
                 }
             }
         }

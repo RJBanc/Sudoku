@@ -32,7 +32,7 @@ class BitUtil {
             return removeFrom and bits.inv()
         }
 
-        fun listBitsSet(word: Int): Array<Int> {
+        fun listBitsSet(word: Int): MutableList<Int> {
             val bits: MutableList<Int> = mutableListOf()
             var wordCopy = word
             var pos = 0
@@ -44,7 +44,7 @@ class BitUtil {
                 wordCopy = wordCopy ushr 1
             }
 
-            return bits.toTypedArray()
+            return bits
         }
     }
 }
