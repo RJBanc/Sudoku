@@ -724,6 +724,85 @@ class SudokuSolver {
         }
 
         return 0
+    }
+
+    fun hiddenQuad(): Int {
+        for (i in 0..8) {
+            for ((arrIndex, arr) in arrayOf(
+                SudokuUtil.getRow(candidates, i),
+                SudokuUtil.getColumn(candidates, i),
+                SudokuUtil.getSquare(candidates, i)).withIndex()
+            ) {
+                val cellsPerNum = Array(9) {0}
+                for (i in arr.indices) {
+                    for (j in cellsPerNum.indices) {
+                        if ((arr[i] ushr j) and 1 == 1)
+                            cellsPerNum[j] = cellsPerNum[j] or (1 shl i)
+                    }
+                }
+
+                val potentialQuads: MutableList<Triple<Int, Int, Int>> = mutableListOf()
+                for ((num, cells) in cellsPerNum.withIndex()) { //num ist die zahl - 1
+                    if (BitUtil.countBits(cells) > 4) continue
+                    for (quad in potentialQuads) {
+                        if (BitUtil.countBits(quad.first or cells) > 4) continue
+
+                        val extendTriple = Triple(
+                            quad.first or cells,
+                            quad.second +  1,
+                            quad.third or (1 shl num)
+                        )
+                        if (extendTriple.second < 4) {
+                            potentialQuads.add(0, extendTriple)
+                            continue
+                        }
+
+                        var eliminatedCands = false
+
+                        for (quadCells in BitUtil.listBitsSet(extendTriple.first)) {
+                            when (arrIndex) {
+                                0 -> {
+                                    val newCands = BitUtil.removeBits(
+                                        candidates[i][quadCells],
+                                        extendTriple.third.inv()
+                                    )
+                                    eliminatedCands = eliminatedCands ||
+                                            (candidates[i][quadCells] != newCands)
+
+                                    candidates[i][quadCells] = newCands
+                                }
+                                1 -> {
+                                    val newCands = BitUtil.removeBits(
+                                        candidates[quadCells][i],
+                                        extendTriple.third.inv()
+                                    )
+                                    eliminatedCands = eliminatedCands ||
+                                            (candidates[quadCells][i] != newCands)
+
+                                    candidates[quadCells][i] = newCands
+                                }
+                                2 -> {
+                                    val coordsNum = SudokuUtil.getCoordsInSqaure(i, quadCells)
+                                    val newCands = BitUtil.removeBits(
+                                        candidates[coordsNum.first][coordsNum.second],
+                                        extendTriple.third.inv()
+                                    )
+                                    eliminatedCands = eliminatedCands ||
+                                            (candidates[coordsNum.first][coordsNum.second] != newCands)
+
+                                    candidates[coordsNum.first][coordsNum.second] = newCands
+                                }
+                            }
+                        }
+
+                        if (eliminatedCands)
+                            return 5000
+                    }
+                    val newPotential = Triple(cells, 1, 1 shl num)
+                    potentialQuads.add(newPotential)
+                }
+            }
+        }
 
         return 0
     }
