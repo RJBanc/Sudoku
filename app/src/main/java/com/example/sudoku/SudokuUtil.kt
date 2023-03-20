@@ -33,8 +33,8 @@ class SudokuUtil {
         }
 
         fun getCoordsInSqaure(squareIndex: Int, posIndex: Int): Pair<Int, Int> {
-            val row = (kotlin.math.floor(squareIndex / 3.0) * 3).toInt() +
-                    (kotlin.math.floor(posIndex / 3.0)).toInt()
+            val row = (kotlin.math.floor(squareIndex / 3.0) * 3 +
+                    kotlin.math.floor(posIndex / 3.0)).toInt()
             val col = (squareIndex % 3) * 3 + (posIndex % 3)
 
             return Pair(row, col)

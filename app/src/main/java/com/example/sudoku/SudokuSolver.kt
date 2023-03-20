@@ -572,4 +572,113 @@ class SudokuSolver {
 
         return 0
     }
+
+    fun forcingChains(): Int {
+        for (row in 0..8) {
+            for (col in 0..8) {
+                if (BitUtil.countBits(candidates[row][col]) != 2) continue
+
+                val firstBit = (candidates[row][col] - 1) and candidates[row][col]
+                val markedf = Array(9) { Array(9) { 0 } }
+                markedf[row][col] = firstBit
+                val path = ArrayDeque<Pair<Int, Int>>()
+                
+                path.addLast(Pair(row, col))
+                while (!path.isEmpty()) {
+                    val cell = path.removeLast()
+                    for (i in 0..8) {
+                        //row
+                        if (markedf[cell.first][i] == 0 &&
+                            candidates[cell.first][i] and markedf[cell.first][cell.second] != 0 &&
+                            BitUtil.countBits(candidates[cell.first][i]) == 2
+                        ) {
+                            markedf[cell.first][i] = BitUtil.removeBits(candidates[cell.first][i],
+                                markedf[cell.first][cell.second])
+                            path.addLast(Pair(cell.first, i))
+                        }
+
+                        //col
+                        if (markedf[i][cell.second] == 0 &&
+                            candidates[i][cell.second] and markedf[cell.first][cell.second] != 0 &&
+                            BitUtil.countBits(candidates[i][cell.second]) == 2
+                        ) {
+                            markedf[i][cell.second] = BitUtil.removeBits(candidates[i][cell.second],
+                                markedf[cell.first][cell.second])
+                            path.addLast(Pair(i, cell.second))
+                        }
+
+                        //square
+                        val sqRow = (kotlin.math.floor(cell.first / 3.0) * 3 +
+                                kotlin.math.floor(i / 3.0)).toInt()
+                        val sqCol = (kotlin.math.floor(cell.second / 3.0) * 3 + i % 3).toInt()
+                        if (markedf[sqRow][sqCol] == 0 &&
+                            candidates[sqRow][sqCol] and markedf[cell.first][cell.second] != 0 &&
+                            BitUtil.countBits(candidates[sqRow][sqCol]) == 2
+                        ) {
+                            markedf[sqRow][sqCol] = BitUtil.removeBits(candidates[sqRow][sqCol],
+                                markedf[cell.first][cell.second])
+                            path.addLast(Pair(sqRow, sqCol))
+                        }
+                    }
+                }
+                
+                val secondBit = firstBit xor candidates[row][col]
+                val markeds = Array(9) { Array(9) { 0 } }
+                markeds[row][col] = secondBit
+                
+                path.addLast(Pair(row, col))
+                while (!path.isEmpty()) {
+                    val cell = path.removeLast()
+                    for (i in 0..8) {
+                        //row
+                        if (markeds[cell.first][i] == 0 &&
+                            candidates[cell.first][i] and markeds[cell.first][cell.second] != 0 &&
+                            BitUtil.countBits(candidates[cell.first][i]) == 2
+                        ) {
+                            markeds[cell.first][i] = BitUtil.removeBits(candidates[cell.first][i],
+                                markeds[cell.first][cell.second])
+                            if (markedf[cell.first][i] == markeds[cell.first][i]) {
+                                addNumber(markeds[cell.first][i], cell.first, i)
+                                return 2100
+                            }
+                            path.addLast(Pair(cell.first, i))
+                        }
+
+                        //col
+                        if (markeds[i][cell.second] == 0 &&
+                            candidates[i][cell.second] and markeds[cell.first][cell.second] != 0 &&
+                            BitUtil.countBits(candidates[i][cell.second]) == 2
+                        ) {
+                            markeds[i][cell.second] = BitUtil.removeBits(candidates[i][cell.second],
+                                markeds[cell.first][cell.second])
+                            if (markedf[i][cell.second] == markeds[i][cell.second]) {
+                                addNumber(markeds[i][cell.second], i, cell.second)
+                                return 2100
+                            }
+                            path.addLast(Pair(i, cell.second))
+                        }
+
+                        //square
+                        val sqRow = (kotlin.math.floor(cell.first / 3.0) * 3 +
+                                kotlin.math.floor(i / 3.0)).toInt()
+                        val sqCol = (kotlin.math.floor(cell.second / 3.0) * 3 + i % 3).toInt()
+                        if (markeds[sqRow][sqCol] == 0 &&
+                            candidates[sqRow][sqCol] and markeds[cell.first][cell.second] != 0 &&
+                            BitUtil.countBits(candidates[sqRow][sqCol]) == 2
+                        ) {
+                            markeds[sqRow][sqCol] = BitUtil.removeBits(candidates[sqRow][sqCol],
+                                markeds[cell.first][cell.second])
+                            if (markedf[sqRow][sqCol] == markeds[sqRow][sqCol]) {
+                                addNumber(markeds[sqRow][sqCol], sqRow, sqCol)
+                                return 2100
+                            }
+                            path.addLast(Pair(sqRow, sqCol))
+                        }
+                    }
+                }
+            }
+        }
+
+        return 0
+    }
 }
