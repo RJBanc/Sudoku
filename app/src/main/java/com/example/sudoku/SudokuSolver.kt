@@ -681,4 +681,50 @@ class SudokuSolver {
 
         return 0
     }
+
+    fun nakedQuad(): Int {
+        for (i in 0..8) {
+            for ((arrIndex, arr) in arrayOf(
+                SudokuUtil.getRow(candidates, i),
+                SudokuUtil.getColumn(candidates, i),
+                SudokuUtil.getSquare(candidates, i)).withIndex()
+            ) {
+                val potentialQuads: MutableList<Pair<Int, Int>> = mutableListOf()
+                for (num in arr) {
+                    if (BitUtil.countBits(num) > 4) continue
+                    for (pair in potentialQuads) {
+                        if (BitUtil.countBits(pair.first or num) > 4) continue
+                        if (pair.second < 3) {
+                            val extendPair = Pair(pair.first or num, pair.second + 1)
+                            potentialQuads.add(0, extendPair)
+                            continue
+                        }
+
+                        var eliminatedCands = false
+                        val transform: (Int) -> Int = {
+                            if (BitUtil.countBits(it or pair.first or num) < 5)
+                                it
+                            else {
+                                eliminatedCands = true
+                                BitUtil.removeBits(it, pair.first or num)
+                            }
+                        }
+                        when (arrIndex) {
+                            0 -> SudokuUtil.applyToRow(candidates, i, transform)
+                            1 -> SudokuUtil.applyToColumn(candidates, i, transform)
+                            2 -> SudokuUtil.applyToSquare(candidates, i, transform)
+                        }
+                        if (eliminatedCands)
+                            return 4000
+                    }
+                    val newPotential = Pair(num, 1)
+                    potentialQuads.add(newPotential)
+                }
+            }
+        }
+
+        return 0
+
+        return 0
+    }
 }
