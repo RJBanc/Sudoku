@@ -788,7 +788,7 @@ class SudokuSolver {
                                         extendTriple.third.inv()
                                     )
                                     eliminatedCands = eliminatedCands ||
-                                            (candidates[coordsNum.first][coordsNum.second] != newCands)
+                                        (candidates[coordsNum.first][coordsNum.second] != newCands)
 
                                     candidates[coordsNum.first][coordsNum.second] = newCands
                                 }
@@ -801,6 +801,108 @@ class SudokuSolver {
                     val newPotential = Triple(cells, 1, 1 shl num)
                     potentialQuads.add(newPotential)
                 }
+            }
+        }
+
+        return 0
+    }
+
+    fun swordfish(): Int {
+        val cellsPerNumRows = Array(9) { num ->
+            Array(9) { rowIndex ->
+                var cells = 0
+                for ((cellIndex, cell) in SudokuUtil.getRow(candidates, rowIndex).withIndex()) {
+                    if ((cell ushr num) and 1 == 1)
+                        cells = cells or (1 shl cellIndex)
+                }
+                cells
+            }
+        }
+
+        for ((num, numRow) in cellsPerNumRows.withIndex()) {
+            val potentialFish = mutableListOf<Pair<Int, Int>>()
+            for (i in 0..8) {
+                if (BitUtil.countBits(numRow[i]) > 3) continue
+                for (pair in potentialFish) {
+                    if (BitUtil.countBits(pair.first or numRow[i]) > 3) continue
+
+                    val extendPair = Pair(
+                        pair.first or numRow[i],
+                        pair.second + 1
+                    )
+                    if (extendPair.second == 2) {
+                        potentialFish.add(0, extendPair)
+                        continue
+                    }
+
+                    var eliminatedCands = false
+                    var index = -1
+                    for (col in BitUtil.listBitsSet(extendPair.first)) {
+                        SudokuUtil.applyToColumn(candidates, col) {
+                            index++
+                            if (numRow[index] and extendPair.first == numRow[index]) {
+                                it
+                            }
+                            else {
+                                eliminatedCands = eliminatedCands || (it ushr num) and 1 == 1
+                                BitUtil.removeBits(it, 1 shl num)
+                            }
+                        }
+                    }
+
+                    if (eliminatedCands)
+                        return 6000
+                }
+                potentialFish.add(Pair(numRow[i], 1))
+            }
+        }
+
+        val cellsPerNumCols = Array(9) { num ->
+            Array(9) { colIndex ->
+                var cells = 0
+                for ((cellIndex, cell) in SudokuUtil.getColumn(candidates, colIndex).withIndex()) {
+                    if ((cell ushr num) and 1 == 1)
+                        cells = cells or (1 shl cellIndex)
+                }
+                cells
+            }
+        }
+
+        for ((num, numCol) in cellsPerNumCols.withIndex()) {
+            val potentialFish = mutableListOf<Pair<Int, Int>>()
+            for (i in 0..8) {
+                if (BitUtil.countBits(numCol[i]) > 3) continue
+                for (pair in potentialFish) {
+                    if (BitUtil.countBits(numCol[i] or pair.first) > 3) continue
+
+                    val extendPair = Pair(
+                        pair.first or numCol[i],
+                        pair.second + 1
+                    )
+                    if (extendPair.second == 2) {
+                        potentialFish.add(0, extendPair)
+                        continue
+                    }
+
+                    var eliminatedCands = false
+                    var index = -1
+                    for (row in BitUtil.listBitsSet(extendPair.first)) {
+                        SudokuUtil.applyToRow(candidates, row) {
+                            index++
+                            if (numCol[index] and extendPair.first == numCol[index]) {
+                                it
+                            }
+                            else {
+                                eliminatedCands = eliminatedCands || (it ushr num) and 1 == 1
+                                BitUtil.removeBits(it, 1 shl num)
+                            }
+                        }
+                    }
+
+                    if (eliminatedCands)
+                        return 6000
+                }
+                potentialFish.add(Pair(numCol[i], 1))
             }
         }
 
