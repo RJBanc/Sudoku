@@ -101,7 +101,7 @@ class SudokuSolver {
                 if (candidates[row][col] == 0) {
                     throw NoSolutionException("Empty field has no possible candidates")
                 }
-                if (BitUtil.isPowerOfTwo(candidates[row][col])) {
+                if (BitUtil.oneBitSet(candidates[row][col])) {
                     addNumber(candidates[row][col], row, col)
                     difficultyScore += 100
                 }

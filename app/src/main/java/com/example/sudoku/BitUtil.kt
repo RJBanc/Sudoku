@@ -12,7 +12,7 @@ class BitUtil {
             return count
         }
 
-        fun isPowerOfTwo(word: Int): Boolean {
+        fun oneBitSet(word: Int): Boolean {
             return word and (word - 1) == 0
         }
 
