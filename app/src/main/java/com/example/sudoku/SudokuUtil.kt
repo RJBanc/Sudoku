@@ -3,7 +3,23 @@ package com.example.sudoku
 class SudokuUtil {
     companion object {
         inline fun<reified T> getRelevantValues(grid: Array<Array<T>>, row: Int, col: Int): Array<T> {
-            return (getRow(grid, row) + getColumn(grid, col) + getSquare(grid, row, col)).toSet().toTypedArray() // dumb hack to remove duplicates (only works if T is class object)
+            val values = mutableListOf<T>()
+            val fromRow = (kotlin.math.floor(row / 3.0) * 3).toInt()
+            val fromCol = (kotlin.math.floor(col / 3.0) * 3).toInt()
+
+            for (i in 0..2) {
+                for (j in 0..2) {
+                    values.add(grid[fromRow + i][fromCol + j])
+                }
+            }
+
+            for (i in 0 until fromCol) values.add(grid[row][i])
+            for (i in (fromCol + 3)..grid.size) values.add(grid[row][i])
+
+            for (i in 0 until fromRow) values.add(grid[i][col])
+            for (i in (fromRow + 3)..grid[0].size) values.add(grid[i][col])
+
+            return values.toTypedArray()
         }
 
         inline fun<reified T> getRow(grid: Array<Array<T>>, row: Int): Array<T> {
