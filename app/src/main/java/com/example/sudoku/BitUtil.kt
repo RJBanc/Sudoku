@@ -13,7 +13,7 @@ class BitUtil {
         }
 
         fun oneBitSet(word: Int): Boolean {
-            return word and (word - 1) == 0
+            return word != 0 && word and (word - 1) == 0
         }
 
         fun uniqueBits(potentialUnique: Int, uniqueFrom: Int): Int {
