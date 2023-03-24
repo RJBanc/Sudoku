@@ -14,10 +14,10 @@ class SudokuUtil {
             }
 
             for (i in 0 until fromCol) values.add(grid[row][i])
-            for (i in (fromCol + 3)..grid.size) values.add(grid[row][i])
+            for (i in (fromCol + 3) until grid.size) values.add(grid[row][i])
 
             for (i in 0 until fromRow) values.add(grid[i][col])
-            for (i in (fromRow + 3)..grid[0].size) values.add(grid[i][col])
+            for (i in (fromRow + 3) until grid[0].size) values.add(grid[i][col])
 
             return values.toTypedArray()
         }
@@ -75,10 +75,10 @@ class SudokuUtil {
             }
 
             for (i in 0 until fromCol) grid[row][i] = transform(grid[row][i])
-            for (i in (fromCol + 3)..grid.size) grid[row][i] = transform(grid[row][i])
+            for (i in (fromCol + 3) until grid.size) grid[row][i] = transform(grid[row][i])
 
             for (i in 0 until fromRow) grid[i][col] = transform(grid[i][col])
-            for (i in (fromRow + 3)..grid[0].size) grid[i][col] = transform(grid[i][col])
+            for (i in (fromRow + 3)until grid[0].size) grid[i][col] = transform(grid[i][col])
         }
 
         inline fun<reified T> applyToRow(grid: Array<Array<T>>, row: Int, transform: (T) -> T) {
