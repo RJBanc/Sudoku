@@ -71,10 +71,10 @@ class SudokuUtilUnitTest {
     }
 
     @Test
-    fun getCoordsInSquareTest() {
-        assertEquals(SudokuUtil.getCoordsInSqaure(0, 0), Pair(0, 0))
-        assertEquals(SudokuUtil.getCoordsInSqaure(4, 0), Pair(3, 3))
-        assertEquals(SudokuUtil.getCoordsInSqaure(4, 5), Pair(4, 5))
+    fun coordsSquareConversionTest() {
+        assertEquals(SudokuUtil.coordsSquareConversion(0, 0), Pair(0, 0))
+        assertEquals(SudokuUtil.coordsSquareConversion(4, 0), Pair(3, 3))
+        assertEquals(SudokuUtil.coordsSquareConversion(4, 5), Pair(4, 5))
     }
 
     @Test
