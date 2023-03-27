@@ -127,14 +127,14 @@ class SudokuSolver {
                 for ((candsIndex, cands) in arr.withIndex()) {
                     val matchingCands = cands and uniqueCands
                     if (matchingCands == 0) continue
-                    if (matchingCands and (matchingCands - 1) != 0)
+                    if (!BitUtil.oneBitSet(matchingCands))
                         throw NoSolutionException("Single Position for multiple numbers")
 
                     when (arrIndex) {
                         0 -> addNumber(matchingCands, i, candsIndex)
                         1 -> addNumber(matchingCands, candsIndex, i)
                         2 -> {
-                            val coords = SudokuUtil.getCoordsInSqaure(i, candsIndex)
+                            val coords = SudokuUtil.coordsSquareConversion(i, candsIndex)
                             addNumber(matchingCands, coords.first, coords.second)
                         }
                     }
@@ -351,8 +351,8 @@ class SudokuSolver {
                                 candidates[otherIndex][i] = uniqueCands
                             }
                             2 -> {
-                                val coordsNum = SudokuUtil.getCoordsInSqaure(i, numIndex)
-                                val coordsOther = SudokuUtil.getCoordsInSqaure(i, otherIndex)
+                                val coordsNum = SudokuUtil.coordsSquareConversion(i, numIndex)
+                                val coordsOther = SudokuUtil.coordsSquareConversion(i, otherIndex)
                                 candidates[coordsNum.first][coordsNum.second] = uniqueCands
                                 candidates[coordsOther.first][coordsOther.second] = uniqueCands
                             }
@@ -467,15 +467,15 @@ class SudokuSolver {
                                     candidates[tripleCells][i] = newCands
                                 }
                                 2 -> {
-                                    val coordsNum = SudokuUtil.getCoordsInSqaure(i, tripleCells)
+                                    val coordNum = SudokuUtil.coordsSquareConversion(i, tripleCells)
                                     val newCands = BitUtil.removeBits(
-                                        candidates[coordsNum.first][coordsNum.second],
+                                        candidates[coordNum.first][coordNum.second],
                                         extendTriple.third.inv()
                                     )
                                     eliminatedCands = eliminatedCands ||
-                                        (candidates[coordsNum.first][coordsNum.second] != newCands)
+                                        (candidates[coordNum.first][coordNum.second] != newCands)
 
-                                    candidates[coordsNum.first][coordsNum.second] = newCands
+                                    candidates[coordNum.first][coordNum.second] = newCands
                                 }
                             }
                         }
@@ -573,108 +573,117 @@ class SudokuSolver {
         return 0
     }
 
-    fun forcingChains(): Int {
-        for (row in 0..8) {
-            for (col in 0..8) {
-                if (BitUtil.countBits(candidates[row][col]) != 2) continue
-
-                val firstBit = (candidates[row][col] - 1) and candidates[row][col]
-                val markedf = Array(9) { Array(9) { 0 } }
-                markedf[row][col] = firstBit
-                val path = ArrayDeque<Pair<Int, Int>>()
-                
-                path.addLast(Pair(row, col))
-                while (!path.isEmpty()) {
-                    val cell = path.removeLast()
-                    for (i in 0..8) {
-                        //row
-                        if (markedf[cell.first][i] == 0 &&
-                            candidates[cell.first][i] and markedf[cell.first][cell.second] != 0 &&
-                            BitUtil.countBits(candidates[cell.first][i]) == 2
-                        ) {
-                            markedf[cell.first][i] = BitUtil.removeBits(candidates[cell.first][i],
-                                markedf[cell.first][cell.second])
-                            path.addLast(Pair(cell.first, i))
-                        }
-
-                        //col
-                        if (markedf[i][cell.second] == 0 &&
-                            candidates[i][cell.second] and markedf[cell.first][cell.second] != 0 &&
-                            BitUtil.countBits(candidates[i][cell.second]) == 2
-                        ) {
-                            markedf[i][cell.second] = BitUtil.removeBits(candidates[i][cell.second],
-                                markedf[cell.first][cell.second])
-                            path.addLast(Pair(i, cell.second))
-                        }
-
-                        //square
-                        val sqRow = (kotlin.math.floor(cell.first / 3.0) * 3 +
-                                kotlin.math.floor(i / 3.0)).toInt()
-                        val sqCol = (kotlin.math.floor(cell.second / 3.0) * 3 + i % 3).toInt()
-                        if (markedf[sqRow][sqCol] == 0 &&
-                            candidates[sqRow][sqCol] and markedf[cell.first][cell.second] != 0 &&
-                            BitUtil.countBits(candidates[sqRow][sqCol]) == 2
-                        ) {
-                            markedf[sqRow][sqCol] = BitUtil.removeBits(candidates[sqRow][sqCol],
-                                markedf[cell.first][cell.second])
-                            path.addLast(Pair(sqRow, sqCol))
-                        }
-                    }
+    fun singleChains(): Int {
+        for (num in Array(9) { 1 shl it }) {
+            val rowCells = Array(9) {
+                var cells = 0
+                for ((cellIndex, cell) in SudokuUtil.getRow(candidates, it).withIndex()) {
+                    if (cell and num > 0)
+                        cells = cells or (1 shl cellIndex)
                 }
-                
-                val secondBit = firstBit xor candidates[row][col]
-                val markeds = Array(9) { Array(9) { 0 } }
-                markeds[row][col] = secondBit
-                
-                path.addLast(Pair(row, col))
-                while (!path.isEmpty()) {
-                    val cell = path.removeLast()
-                    for (i in 0..8) {
-                        //row
-                        if (markeds[cell.first][i] == 0 &&
-                            candidates[cell.first][i] and markeds[cell.first][cell.second] != 0 &&
-                            BitUtil.countBits(candidates[cell.first][i]) == 2
-                        ) {
-                            markeds[cell.first][i] = BitUtil.removeBits(candidates[cell.first][i],
-                                markeds[cell.first][cell.second])
-                            if (markedf[cell.first][i] == markeds[cell.first][i]) {
-                                addNumber(markeds[cell.first][i], cell.first, i)
-                                return 2100
-                            }
-                            path.addLast(Pair(cell.first, i))
-                        }
+                cells
+            }
+            val colCells = Array(9) {
+                var cells = 0
+                for ((cellIndex, cell) in SudokuUtil.getColumn(candidates, it).withIndex()) {
+                    if (cell and num > 0)
+                        cells = cells or (1 shl cellIndex)
+                }
+                cells
+            }
+            val squareCells = Array(9) {
+                var cells = 0
+                for ((cellIndex, cell) in SudokuUtil.getSquare(candidates, it).withIndex()) {
+                    if (cell and num > 0)
+                        cells = cells or (1 shl cellIndex)
+                }
+                cells
+            }
+            var color = Array(9) { Array<Boolean?>(9) { null } }
 
-                        //col
-                        if (markeds[i][cell.second] == 0 &&
-                            candidates[i][cell.second] and markeds[cell.first][cell.second] != 0 &&
-                            BitUtil.countBits(candidates[i][cell.second]) == 2
-                        ) {
-                            markeds[i][cell.second] = BitUtil.removeBits(candidates[i][cell.second],
-                                markeds[cell.first][cell.second])
-                            if (markedf[i][cell.second] == markeds[i][cell.second]) {
-                                addNumber(markeds[i][cell.second], i, cell.second)
-                                return 2100
-                            }
-                            path.addLast(Pair(i, cell.second))
-                        }
+            for (row in 0..8) {
+                for (col in 0..8) {
+                    if (candidates[row][col] and num == 0 || color[row][col] != null) continue
+                    color = Array(9) { Array(9) { null } }
+                    color[row][col] = true
+                    val queue = ArrayDeque<Pair<Int, Int>>()
+                    queue.addLast(Pair(row, col))
 
-                        //square
-                        val sqRow = (kotlin.math.floor(cell.first / 3.0) * 3 +
-                                kotlin.math.floor(i / 3.0)).toInt()
-                        val sqCol = (kotlin.math.floor(cell.second / 3.0) * 3 + i % 3).toInt()
-                        if (markeds[sqRow][sqCol] == 0 &&
-                            candidates[sqRow][sqCol] and markeds[cell.first][cell.second] != 0 &&
-                            BitUtil.countBits(candidates[sqRow][sqCol]) == 2
-                        ) {
-                            markeds[sqRow][sqCol] = BitUtil.removeBits(candidates[sqRow][sqCol],
-                                markeds[cell.first][cell.second])
-                            if (markedf[sqRow][sqCol] == markeds[sqRow][sqCol]) {
-                                addNumber(markeds[sqRow][sqCol], sqRow, sqCol)
-                                return 2100
+                    while (!queue.isEmpty()) {
+                        val cell = queue.removeFirst()
+                        if (BitUtil.countBits(rowCells[cell.first]) == 2) {
+                            val other = kotlin.math.log2(
+                                (rowCells[cell.first] xor (1 shl cell.second)).toDouble()).toInt()
+                            if (color[cell.first][other] == null) {
+                                color[cell.first][other] = !color[cell.first][cell.second]!!
+                                queue.addLast(Pair(cell.first, other))
                             }
-                            path.addLast(Pair(sqRow, sqCol))
+                        }
+                        if (BitUtil.countBits(colCells[cell.second]) == 2) {
+                            val other = kotlin.math.log2(
+                                (colCells[cell.second] xor (1 shl cell.first)).toDouble()).toInt()
+                            if (color[other][cell.second] == null) {
+                                color[other][cell.second] = !color[cell.first][cell.second]!!
+                                queue.addLast(Pair(other, cell.second))
+                            }
+                        }
+                        val squareIndex = SudokuUtil.coordsSquareConversion(cell.first, cell.second)
+                        if (BitUtil.countBits(squareCells[squareIndex.first]) == 2) {
+                            val other = SudokuUtil.coordsSquareConversion(squareIndex.first,
+                                kotlin.math.log2(
+                                    (squareCells[squareIndex.first] xor (1 shl squareIndex.second))
+                                    .toDouble()).toInt())
+                            if (color[other.first][other.second] == null) {
+                                color[other.first][other.second] = !color[cell.first][cell.second]!!
+                                queue.addLast(Pair(other.first, other.second))
+                            }
                         }
                     }
+
+                    for (i in 0..8) {
+                        for (arr in arrayOf(
+                            SudokuUtil.getRow(color, i),
+                            SudokuUtil.getColumn(color, i),
+                            SudokuUtil.getSquare(color, i)
+                        )) {
+                            if (arr.count { it == true } == 2) {
+                                for (cRow in 0..8) {
+                                    for (cCol in 0..8) {
+                                        if (color[cRow][cCol] == false)
+                                            addNumber(num, cRow, cCol)
+                                    }
+                                }
+
+                                return 2100
+                            }
+                            else if (arr.count { it == false } == 2) {
+                                for (cRow in 0..8) {
+                                    for (cCol in 0..8) {
+                                        if (color[cRow][cCol] == true)
+                                            addNumber(num, cRow, cCol)
+                                    }
+                                }
+
+                                return 2100
+                            }
+                        }
+                    }
+
+                    var eliminatedCands = false
+                    for (cRow in 0..8) {
+                        for (cCol in 0..8) {
+                            if (candidates[cRow][cCol] and num == 0) continue
+                            val rev = SudokuUtil.getRelevantValues(color, cRow, cCol)
+                            if (rev.any { it == true } && rev.any { it == false }) {
+                                candidates[cRow][cCol] = BitUtil.removeBits(
+                                    candidates[cRow][cCol], num)
+
+                                eliminatedCands = true
+                            }
+                        }
+                    }
+                    if (eliminatedCands)
+                        return 2100
                 }
             }
         }
@@ -782,7 +791,7 @@ class SudokuSolver {
                                     candidates[quadCells][i] = newCands
                                 }
                                 2 -> {
-                                    val coordsNum = SudokuUtil.getCoordsInSqaure(i, quadCells)
+                                    val coordsNum = SudokuUtil.coordsSquareConversion(i, quadCells)
                                     val newCands = BitUtil.removeBits(
                                         candidates[coordsNum.first][coordsNum.second],
                                         extendTriple.third.inv()
