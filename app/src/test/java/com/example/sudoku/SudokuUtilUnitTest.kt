@@ -181,4 +181,21 @@ class SudokuUtilUnitTest {
             arrayOf(8, 2, 9, 7, 3, 5, 6, 4, 1)
         ))
     }
+
+    @Test
+    fun applyToGridTest() {
+        val sudokuCopy = fullSudoku.copy()
+        SudokuUtil.applyToGrid(sudokuCopy) { -1 * it }
+        assertArrayEquals(sudokuCopy, arrayOf(
+            arrayOf(-9, -7, -2, -6, -1, -4, -3, -8, -5),
+            arrayOf(-6, -5, -8, -3, -7, -9, -2, -1, -4),
+            arrayOf(-1, -3, -4, -5, -2, -8, -7, -9, -6),
+            arrayOf(-4, -8, -7, -9, -6, -3, -1, -5, -2),
+            arrayOf(-2, -6, -3, -4, -5, -1, -9, -7, -8),
+            arrayOf(-5, -9, -1, -2, -8, -7, -4, -6, -3),
+            arrayOf(-3, -4, -5, -1, -9, -6, -8, -2, -7),
+            arrayOf(-7, -1, -6, -8, -4, -2, -5, -3, -9),
+            arrayOf(-8, -2, -9, -7, -3, -5, -6, -4, -1)
+        ))
+    }
 }

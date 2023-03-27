@@ -110,5 +110,13 @@ class SudokuUtil {
                 }
             }
         }
+
+        inline fun<reified T> applyToGrid(grid: Array<Array<T>>, transform: (T) -> T) {
+            for (row in grid.indices) {
+                for (col in grid[0].indices) {
+                    grid[row][col] = transform(grid[row][col])
+                }
+            }
+        }
     }
 }
