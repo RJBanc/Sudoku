@@ -7,13 +7,13 @@ class BitUtilUnitTest {
 
     @Test
     fun countBitsTest() {
-        assertEquals(BitUtil.countBits(0b0), 0)
-        assertEquals(BitUtil.countBits(0b1), 1)
-        assertEquals(BitUtil.countBits(0b10), 1)
-        assertEquals(BitUtil.countBits(0b11), 2)
-        assertEquals(BitUtil.countBits(0b101010), 3)
-        assertEquals(BitUtil.countBits(0b111111111), 9)
-        assertEquals(BitUtil.countBits(-1), 32)
+        assertEquals(0, BitUtil.countBits(0b0))
+        assertEquals(1, BitUtil.countBits(0b1))
+        assertEquals(1, BitUtil.countBits(0b10))
+        assertEquals(2, BitUtil.countBits(0b11))
+        assertEquals(3, BitUtil.countBits(0b101010))
+        assertEquals(9, BitUtil.countBits(0b111111111))
+        assertEquals(32, BitUtil.countBits(-1))
     }
 
     @Test
@@ -29,11 +29,11 @@ class BitUtilUnitTest {
 
     @Test
     fun uniqueBitsTwoWordsTest() {
-        assertEquals(BitUtil.uniqueBits(0b0110, 0b1110), 0)
-        assertEquals(BitUtil.uniqueBits(0b1110, 0b1110), 0)
-        assertEquals(BitUtil.uniqueBits(0b1110, 0b0110), 0b1000)
-        assertEquals(BitUtil.uniqueBits(0b0110, 0b0), 0b0110)
-        assertEquals(BitUtil.uniqueBits(0b0, 0b1110), 0)
+        assertEquals(0, BitUtil.uniqueBits(0b0110, 0b1110))
+        assertEquals(0, BitUtil.uniqueBits(0b1110, 0b1110))
+        assertEquals(0b1000, BitUtil.uniqueBits(0b1110, 0b0110))
+        assertEquals(0b0110, BitUtil.uniqueBits(0b0110, 0b0))
+        assertEquals(0, BitUtil.uniqueBits(0b0, 0b1110))
     }
 
     @Test
@@ -65,27 +65,27 @@ class BitUtilUnitTest {
             0b10000
         )
 
-        assertEquals(BitUtil.uniqueBits(arr1), 0)
-        assertEquals(BitUtil.uniqueBits(arr2), 0b1)
-        assertEquals(BitUtil.uniqueBits(arr3), 0b1001)
-        assertEquals(BitUtil.uniqueBits(arr4), 0)
-        assertEquals(BitUtil.uniqueBits(arr5), 0b10110)
+        assertEquals(0, BitUtil.uniqueBits(arr1))
+        assertEquals(0b1, BitUtil.uniqueBits(arr2))
+        assertEquals(0b1001, BitUtil.uniqueBits(arr3))
+        assertEquals(0, BitUtil.uniqueBits(arr4))
+        assertEquals(0b10110, BitUtil.uniqueBits(arr5))
     }
 
     @Test
     fun removeBitsTest() {
-        assertEquals(BitUtil.removeBits(0, 0), 0)
-        assertEquals(BitUtil.removeBits(1, 0), 1)
-        assertEquals(BitUtil.removeBits(0, 1), 0)
-        assertEquals(BitUtil.removeBits(0b101, 0b100), 1)
-        assertEquals(BitUtil.removeBits(0b1111, 0b1001), 0b0110)
+        assertEquals(0, BitUtil.removeBits(0, 0))
+        assertEquals(1, BitUtil.removeBits(1, 0))
+        assertEquals(0, BitUtil.removeBits(0, 1))
+        assertEquals(1, BitUtil.removeBits(0b101, 0b100))
+        assertEquals(0b0110, BitUtil.removeBits(0b1111, 0b1001))
     }
 
     @Test
     fun listBitsSetTest() {
-        assertArrayEquals(BitUtil.listBitsSet(0b0).toTypedArray(), emptyArray())
-        assertArrayEquals(BitUtil.listBitsSet(0b1).toTypedArray(), arrayOf(0))
-        assertArrayEquals(BitUtil.listBitsSet(0b100).toTypedArray(), arrayOf(2))
-        assertArrayEquals(BitUtil.listBitsSet(0b11001).toTypedArray(), arrayOf(0,3,4))
+        assertArrayEquals(emptyArray(), BitUtil.listBitsSet(0b0).toTypedArray())
+        assertArrayEquals(arrayOf(0), BitUtil.listBitsSet(0b1).toTypedArray())
+        assertArrayEquals(arrayOf(2), BitUtil.listBitsSet(0b100).toTypedArray())
+        assertArrayEquals(arrayOf(0,3,4), BitUtil.listBitsSet(0b11001).toTypedArray())
     }
 }
