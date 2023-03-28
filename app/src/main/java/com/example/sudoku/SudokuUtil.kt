@@ -34,18 +34,18 @@ class SudokuUtil {
             val fromRow = (kotlin.math.floor(row / 3.0) * 3).toInt()
             val fromCol = (kotlin.math.floor(col / 3.0) * 3).toInt()
 
-            return grid[fromRow].slice(fromCol..(fromCol + 2)).toTypedArray() +
-                    grid[fromRow + 1].slice(fromCol..(fromCol + 2)).toTypedArray() +
-                    grid[fromRow + 2].slice(fromCol..(fromCol + 2)).toTypedArray()
+            return Array(9) {
+                grid[fromRow + kotlin.math.floor(it / 3.0).toInt()][fromCol + (it % 3)]
+            }
         }
 
         inline fun<reified T> getSquare(grid: Array<Array<T>>, square: Int): Array<T> {
             val fromRow = (kotlin.math.floor(square / 3.0) * 3).toInt()
             val fromCol = (square % 3) * 3
 
-            return grid[fromRow].slice(fromCol..(fromCol + 2)).toTypedArray() +
-                    grid[fromRow + 1].slice(fromCol..(fromCol + 2)).toTypedArray() +
-                    grid[fromRow + 2].slice(fromCol..(fromCol + 2)).toTypedArray()
+            return Array(9) {
+                grid[fromRow + kotlin.math.floor(it / 3.0).toInt()][fromCol + (it % 3)]
+            }
         }
 
         fun coordsSquareConversion(rowOrSquare: Int, colOrIndex: Int): Pair<Int, Int> {
@@ -59,9 +59,8 @@ class SudokuUtil {
         inline fun<reified  T> getSquareAsMat(grid: Array<Array<T>>, row: Int, col: Int): Array<Array<T>> {
             val fromRow = (kotlin.math.floor(row / 3.0) * 3).toInt()
             val fromCol = (kotlin.math.floor(col / 3.0) * 3).toInt()
-            return arrayOf(grid[fromRow].slice(fromCol..(fromCol + 2)).toTypedArray(),
-                    grid[fromRow + 1].slice(fromCol..(fromCol + 2)).toTypedArray(),
-                    grid[fromRow + 2].slice(fromCol..(fromCol + 2)).toTypedArray())
+
+            return Array(3) { i -> Array(3) { j -> grid[fromRow + i][fromCol + j]} }
         }
 
         inline fun<reified T> applyToRelevantValues(grid: Array<Array<T>>, row: Int, col: Int, transform: (T) -> T) {
