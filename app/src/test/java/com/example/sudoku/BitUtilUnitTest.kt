@@ -64,12 +64,20 @@ class BitUtilUnitTest {
             0b01001,
             0b10000
         )
+        val arr6 = arrayOf(
+            0b10000,
+            0b11000,
+            0b00110,
+            0b01101,
+            0b11101
+        )
 
         assertEquals(0, BitUtil.uniqueBits(arr1))
         assertEquals(0b1, BitUtil.uniqueBits(arr2))
         assertEquals(0b1001, BitUtil.uniqueBits(arr3))
         assertEquals(0, BitUtil.uniqueBits(arr4))
         assertEquals(0b10110, BitUtil.uniqueBits(arr5))
+        assertEquals(0b00010, BitUtil.uniqueBits(arr6))
     }
 
     @Test
