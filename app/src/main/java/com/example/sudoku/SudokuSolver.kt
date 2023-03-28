@@ -1,7 +1,7 @@
 package com.example.sudoku
 
 class SudokuSolver {
-    private val candidates = Array(9) { Array(9) { 0b111111111 } }
+    internal val candidates = Array(9) { Array(9) { 0b111111111 } }
     private var grid: Array<Array<String?>>
 
     private val stringToBitMap = mapOf<String?, Int>(
@@ -89,60 +89,40 @@ class SudokuSolver {
 //        }
 //    }
 
-    fun singleCandidate(): Int {
+    fun singleCandidatePosition(): Int {
         var difficultyScore = 0
+
+        val rowUnique = Array(9) {
+            BitUtil.uniqueBits(SudokuUtil.getRow(candidates, it))
+        }
+        val colUnique = Array(9) {
+            BitUtil.uniqueBits(SudokuUtil.getColumn(candidates, it))
+        }
+        val squareUnique = Array(9) {
+            BitUtil.uniqueBits(SudokuUtil.getSquare(candidates, it))
+        }
 
         for (row in 0..8) {
             for (col in 0..8) {
                 if (grid[row][col] != null) {
                     continue
                 }
-
                 if (candidates[row][col] == 0) {
                     throw NoSolutionException("Empty field has no possible candidates")
                 }
+
                 if (BitUtil.oneBitSet(candidates[row][col])) {
                     addNumber(candidates[row][col], row, col)
                     difficultyScore += 100
                 }
-            }
-        }
 
-        return difficultyScore
-    }
-
-    fun singlePosition(): Int {
-        var difficultyScore = 0
-
-        for (i in 0..8) {
-            for ((arrIndex, arr) in arrayOf(
-                SudokuUtil.getRow(candidates, i),
-                SudokuUtil.getColumn(candidates, i),
-                SudokuUtil.getSquare(candidates, i)).withIndex()
-            ) {
-                var uniqueCands = BitUtil.uniqueBits(arr)
-
-                if (uniqueCands == 0) continue
-
-                for ((candsIndex, cands) in arr.withIndex()) {
-                    val matchingCands = cands and uniqueCands
-                    if (matchingCands == 0) continue
-                    if (!BitUtil.oneBitSet(matchingCands))
-                        throw NoSolutionException("Single Position for multiple numbers")
-
-                    when (arrIndex) {
-                        0 -> addNumber(matchingCands, i, candsIndex)
-                        1 -> addNumber(matchingCands, candsIndex, i)
-                        2 -> {
-                            val coords = SudokuUtil.coordsSquareConversion(i, candsIndex)
-                            addNumber(matchingCands, coords.first, coords.second)
-                        }
-                    }
+                val squ = SudokuUtil.coordsSquareConversion(row, col).first
+                val relevantUnique = rowUnique[row] or colUnique[col] or squareUnique[squ]
+                if (BitUtil.oneBitSet(relevantUnique and candidates[row][col])) {
+                    addNumber(relevantUnique and candidates[row][col], row, col)
                     difficultyScore += 100
-
-                    uniqueCands -= cands
-                    if (uniqueCands == 0) break
-
+                } else if (relevantUnique and candidates[row][col] > 0) {
+                    throw NoSolutionException("Single Position for multiple numbers")
                 }
             }
         }
