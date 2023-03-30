@@ -920,4 +920,27 @@ class SudokuSolver {
 
         return 0
     }
+
+    fun BUG(): Int {
+        var triPose: Pair<Int, Int>? = null
+        for (row in 0..8) {
+            for (col in 0..8) {
+                if (BitUtil.countBits(candidates[row][col]) > 3) return 0
+                if (BitUtil.countBits(candidates[row][col]) == 3) {
+                    if (triPose != null)
+                        return 0
+                    triPose = Pair(row, col)
+                }
+            }
+        }
+        if (triPose == null) return 0
+
+        val tmp = candidates[triPose.first][triPose.second]
+        candidates[triPose.first][triPose.second] = 0
+        val rowBits = SudokuUtil.getRow(candidates, triPose.first)
+        val solution = tmp xor BitUtil.uniqueBits(rowBits)
+        addNumber(solution, triPose.first, triPose.second)
+
+        return 6500
+    }
 }
