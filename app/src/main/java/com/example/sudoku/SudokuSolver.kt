@@ -310,10 +310,12 @@ class SudokuSolver {
                 SudokuUtil.getSquare(candidates, i)).withIndex()
             ) {
                 for (numIndex in 0 until (arr.size - 1)) {
-                    val rest = arr.slice((numIndex + 1) until arr.size).toTypedArray()
-                    val uniqueCands = BitUtil.uniqueBits(rest)
+                    val temp = arr[numIndex]
+                    arr[numIndex] = 0
+                    val uniqueCands = BitUtil.uniqueBits(arr)
+                    arr[numIndex] = temp
 
-                    if (uniqueCands != 2) continue
+                    if (BitUtil.countBits(uniqueCands) != 2) continue
                     if (uniqueCands and arr[numIndex] != uniqueCands) continue
 
                     for (otherIndex in (numIndex + 1) until arr.size) {
@@ -356,21 +358,24 @@ class SudokuSolver {
             ) {
                 val potentialTriplets: MutableList<Pair<Int, Int>> = mutableListOf()
                 for (num in arr) {
+                    if (num == 0) continue
                     if (BitUtil.countBits(num) > 3) continue
-                    for (pair in potentialTriplets) {
+                    val iter = potentialTriplets.listIterator()
+                    while (iter.hasNext()) {
+                        val pair = iter.next()
                         if (BitUtil.countBits(pair.first or num) > 3) continue
                         if (pair.second == 1) {
                             val extendPair = Pair(pair.first or num, 2)
-                            potentialTriplets.add(0, extendPair)
+                            iter.add(extendPair)
                             continue
                         }
 
                         var eliminatedCands = false
                         val transform: (Int) -> Int = {
-                            if (BitUtil.countBits(it or pair.first or num) < 4)
+                            if (it and (pair.first or num) == it)
                                 it
                             else {
-                                eliminatedCands = true
+                                eliminatedCands = eliminatedCands || it and (pair.first or num) > 0
                                 BitUtil.removeBits(it, pair.first or num)
                             }
                         }
@@ -408,8 +413,11 @@ class SudokuSolver {
 
                 val potentialTriplets: MutableList<Triple<Int, Int, Int>> = mutableListOf()
                 for ((num, cells) in cellsPerNum.withIndex()) { //num ist die zahl - 1
+                    if (cells == 0) continue
                     if (BitUtil.countBits(cells) > 3) continue
-                    for (triple in potentialTriplets) {
+                    val iter = potentialTriplets.listIterator()
+                    while (iter.hasNext()) {
+                        val triple = iter.next()
                         if (BitUtil.countBits(triple.first or cells) > 3) continue
 
                         val extendTriple = Triple(
@@ -418,7 +426,7 @@ class SudokuSolver {
                             triple.third or (1 shl num)
                         )
                         if (extendTriple.second == 2) {
-                            potentialTriplets.add(0, extendTriple)
+                            iter.add(extendTriple)
                             continue
                         }
 
@@ -491,8 +499,8 @@ class SudokuSolver {
                     if (numRow[i] != numRow[j]) continue
 
                     var eliminatedCands = false
-                    var index = -1
                     for (col in BitUtil.listBitsSet(numRow[i])) {
+                        var index = -1
                         SudokuUtil.applyToColumn(candidates, col) {
                             index++
                             if (index == i || index == j) {
@@ -530,8 +538,8 @@ class SudokuSolver {
                     if (numCol[i] != numCol[j]) continue
 
                     var eliminatedCands = false
-                    var index = -1
                     for (row in BitUtil.listBitsSet(numCol[i])) {
+                        var index = -1
                         SudokuUtil.applyToRow(candidates, row) {
                             index++
                             if (index == i || index == j) {
@@ -653,7 +661,10 @@ class SudokuSolver {
                     for (cRow in 0..8) {
                         for (cCol in 0..8) {
                             if (candidates[cRow][cCol] and num == 0) continue
+                            val temp = color[cRow][cCol]
+                            color[cRow][cCol] = null
                             val rev = SudokuUtil.getRelevantValues(color, cRow, cCol)
+                            color[cRow][cCol] = temp
                             if (rev.any { it == true } && rev.any { it == false }) {
                                 candidates[cRow][cCol] = BitUtil.removeBits(
                                     candidates[cRow][cCol], num)
@@ -680,21 +691,24 @@ class SudokuSolver {
             ) {
                 val potentialQuads: MutableList<Pair<Int, Int>> = mutableListOf()
                 for (num in arr) {
+                    if (num == 0) continue
                     if (BitUtil.countBits(num) > 4) continue
-                    for (pair in potentialQuads) {
+                    val iter = potentialQuads.listIterator()
+                    while (iter.hasNext()) {
+                        val pair = iter.next()
                         if (BitUtil.countBits(pair.first or num) > 4) continue
                         if (pair.second < 3) {
                             val extendPair = Pair(pair.first or num, pair.second + 1)
-                            potentialQuads.add(0, extendPair)
+                            iter.add(extendPair)
                             continue
                         }
 
                         var eliminatedCands = false
                         val transform: (Int) -> Int = {
-                            if (BitUtil.countBits(it or pair.first or num) < 5)
+                            if (it and (pair.first or num) == it)
                                 it
                             else {
-                                eliminatedCands = true
+                                eliminatedCands = eliminatedCands || it and (pair.first or num) > 0
                                 BitUtil.removeBits(it, pair.first or num)
                             }
                         }
@@ -732,8 +746,11 @@ class SudokuSolver {
 
                 val potentialQuads: MutableList<Triple<Int, Int, Int>> = mutableListOf()
                 for ((num, cells) in cellsPerNum.withIndex()) { //num ist die zahl - 1
+                    if (cells == 0) continue
                     if (BitUtil.countBits(cells) > 4) continue
-                    for (quad in potentialQuads) {
+                    val iter = potentialQuads.listIterator()
+                    while (iter.hasNext()) {
+                        val quad = iter.next()
                         if (BitUtil.countBits(quad.first or cells) > 4) continue
 
                         val extendTriple = Triple(
@@ -742,7 +759,7 @@ class SudokuSolver {
                             quad.third or (1 shl num)
                         )
                         if (extendTriple.second < 4) {
-                            potentialQuads.add(0, extendTriple)
+                            iter.add(extendTriple)
                             continue
                         }
 
@@ -811,8 +828,11 @@ class SudokuSolver {
         for ((num, numRow) in cellsPerNumRows.withIndex()) {
             val potentialFish = mutableListOf<Pair<Int, Int>>()
             for (i in 0..8) {
+                if (numRow[i] == 0) continue
                 if (BitUtil.countBits(numRow[i]) > 3) continue
-                for (pair in potentialFish) {
+                val iter = potentialFish.listIterator()
+                while (iter.hasNext()) {
+                    val pair = iter.next()
                     if (BitUtil.countBits(pair.first or numRow[i]) > 3) continue
 
                     val extendPair = Pair(
@@ -820,13 +840,13 @@ class SudokuSolver {
                         pair.second + 1
                     )
                     if (extendPair.second == 2) {
-                        potentialFish.add(0, extendPair)
+                        iter.add(extendPair)
                         continue
                     }
 
                     var eliminatedCands = false
-                    var index = -1
                     for (col in BitUtil.listBitsSet(extendPair.first)) {
+                        var index = -1
                         SudokuUtil.applyToColumn(candidates, col) {
                             index++
                             if (numRow[index] and extendPair.first == numRow[index]) {
@@ -860,8 +880,11 @@ class SudokuSolver {
         for ((num, numCol) in cellsPerNumCols.withIndex()) {
             val potentialFish = mutableListOf<Pair<Int, Int>>()
             for (i in 0..8) {
+                if (numCol[i] == 0) continue
                 if (BitUtil.countBits(numCol[i]) > 3) continue
-                for (pair in potentialFish) {
+                val iter = potentialFish.listIterator()
+                while (iter.hasNext()) {
+                    val pair = iter.next()
                     if (BitUtil.countBits(numCol[i] or pair.first) > 3) continue
 
                     val extendPair = Pair(
@@ -869,13 +892,13 @@ class SudokuSolver {
                         pair.second + 1
                     )
                     if (extendPair.second == 2) {
-                        potentialFish.add(0, extendPair)
+                        iter.add(extendPair)
                         continue
                     }
 
                     var eliminatedCands = false
-                    var index = -1
                     for (row in BitUtil.listBitsSet(extendPair.first)) {
+                        var index = -1
                         SudokuUtil.applyToRow(candidates, row) {
                             index++
                             if (numCol[index] and extendPair.first == numCol[index]) {
