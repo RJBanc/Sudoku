@@ -33,6 +33,33 @@ class SudokuUtilUnitTest {
     }
 
     @Test
+    fun getRelevantCoordsTest() {
+        assertArrayEquals(arrayOf(
+            Pair(3, 3),
+            Pair(3, 4),
+            Pair(3, 5),
+            Pair(4, 3),
+            Pair(4, 4),
+            Pair(4, 5),
+            Pair(5, 3),
+            Pair(5, 4),
+            Pair(5, 5),
+            Pair(4, 0),
+            Pair(4, 1),
+            Pair(4, 2),
+            Pair(4, 6),
+            Pair(4, 7),
+            Pair(4, 8),
+            Pair(0, 5),
+            Pair(1, 5),
+            Pair(2, 5),
+            Pair(6, 5),
+            Pair(7, 5),
+            Pair(8, 5)
+        ), SudokuUtil.getRelevantCoords(4, 5))
+    }
+
+    @Test
     fun getRowTest() {
         assertArrayEquals(SudokuUtil.getRow(fullSudoku, 0),
             arrayOf(9, 7, 2, 6, 1, 4, 3, 8, 5))

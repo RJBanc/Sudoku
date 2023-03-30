@@ -22,6 +22,26 @@ class SudokuUtil {
             return values.toTypedArray()
         }
 
+        fun getRelevantCoords(row: Int, col: Int): Array<Pair<Int, Int>> {
+            val values = mutableListOf<Pair<Int, Int>>()
+            val fromRow = (kotlin.math.floor(row / 3.0) * 3).toInt()
+            val fromCol = (kotlin.math.floor(col / 3.0) * 3).toInt()
+
+            for (i in 0..2) {
+                for (j in 0..2) {
+                    values.add(Pair(fromRow + i, fromCol + j))
+                }
+            }
+
+            for (i in 0 until fromCol) values.add(Pair(row, i))
+            for (i in (fromCol + 3) ..8) values.add(Pair(row, i))
+
+            for (i in 0 until fromRow) values.add(Pair(i, col))
+            for (i in (fromRow + 3) ..8) values.add(Pair(i, col))
+
+            return values.toTypedArray()
+        }
+
         inline fun<reified T> getRow(grid: Array<Array<T>>, row: Int): Array<T> {
             return grid[row]
         }
