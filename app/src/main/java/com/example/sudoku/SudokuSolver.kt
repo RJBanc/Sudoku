@@ -481,18 +481,16 @@ class SudokuSolver {
     }
 
     fun xWing(): Int {
-        val cellsPerNumRows = Array(9) { num ->
-            Array(9) { rowIndex ->
+        for (num in 0..8) {
+            val numRow = Array(9) {
                 var cells = 0
-                for ((cellIndex, cell) in SudokuUtil.getRow(candidates, rowIndex).withIndex()) {
+                for ((cellIndex, cell) in SudokuUtil.getRow(candidates, it).withIndex()) {
                     if ((cell ushr num) and 1 == 1)
                         cells = cells or (1 shl cellIndex)
                 }
                 cells
             }
-        }
 
-        for ((num, numRow) in cellsPerNumRows.withIndex()) {
             for (i in 0..7) {
                 if (BitUtil.countBits(numRow[i]) != 2) continue
                 for (j in (i + 1)..8) {
@@ -520,18 +518,16 @@ class SudokuSolver {
         }
 
 
-        val cellsPerNumCols = Array(9) { num ->
-            Array(9) { colIndex ->
+        for (num in 0..8) {
+            val numCol = Array(9) {
                 var cells = 0
-                for ((cellIndex, cell) in SudokuUtil.getColumn(candidates, colIndex).withIndex()) {
+                for ((cellIndex, cell) in SudokuUtil.getColumn(candidates, it).withIndex()) {
                     if ((cell ushr num) and 1 == 1)
                         cells = cells or (1 shl cellIndex)
                 }
                 cells
             }
-        }
 
-        for ((num, numCol) in cellsPerNumCols.withIndex()) {
             for (i in 0..7) {
                 if (BitUtil.countBits(numCol[i]) != 2) continue
                 for (j in (i + 1)..8) {
@@ -554,6 +550,54 @@ class SudokuSolver {
 
                     if (eliminatedCands)
                         return 1600
+                }
+            }
+        }
+
+        return 0
+    }
+
+    fun yWing(): Int {
+        for (row in 0..8) {
+            for (col in 0..8) {
+                val ab = candidates[row][col]
+                if (BitUtil.countBits(ab) != 2) continue
+
+                val corners = mutableListOf<Pair<Int, Int>>()
+                for (coord in SudokuUtil.getRelevantCoords(row, col)) {
+                    val coordVal = candidates[coord.first][coord.second]
+                    if (BitUtil.countBits(coordVal) != 2) continue
+                    if (coordVal == ab || coordVal and ab == 0)
+                        continue
+
+
+                    for (cornerCoord in corners) {
+                        val corner = candidates[cornerCoord.first][cornerCoord.second]
+                        if (corner and coordVal == 0 || corner == coordVal) continue
+                        if (corner and coordVal and ab != 0) continue
+
+                        val bcRev = SudokuUtil.getRelevantCoords(coord.first, coord.second)
+                        val acRev = SudokuUtil.getRelevantCoords(
+                            cornerCoord.first, cornerCoord.second)
+
+                        if (cornerCoord in bcRev) continue
+
+                        val c = corner and coordVal
+                        var eliminatedCands = false
+
+                        for (potCand in bcRev.intersect(acRev.toSet())) {
+                            if (candidates[potCand.first][potCand.second] and c == 0) continue
+
+                            eliminatedCands = true
+                            candidates[potCand.first][potCand.second] = BitUtil.removeBits(
+                                candidates[potCand.first][potCand.second], c
+                            )
+                        }
+
+                        if (eliminatedCands)
+                            return 2500
+                    }
+                    corners.add(coord)
                 }
             }
         }
@@ -642,7 +686,7 @@ class SudokuSolver {
                                     }
                                 }
 
-                                return 2100
+                                return 3000
                             }
                             else if (arr.count { it == false } == 2) {
                                 for (cRow in 0..8) {
@@ -652,7 +696,7 @@ class SudokuSolver {
                                     }
                                 }
 
-                                return 2100
+                                return 3000
                             }
                         }
                     }
@@ -674,7 +718,7 @@ class SudokuSolver {
                         }
                     }
                     if (eliminatedCands)
-                        return 2100
+                        return 3000
                 }
             }
         }

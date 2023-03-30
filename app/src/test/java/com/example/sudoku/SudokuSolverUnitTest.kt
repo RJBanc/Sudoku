@@ -513,6 +513,52 @@ class SudokuSolverUnitTest {
     }
 
     @Test
+    fun yWingTest() {
+        val sudoku = arrayOf<Array<String?>>(
+            arrayOf("9",    null,    null,    "2",    "4",    null,    null,    null,    null),
+            arrayOf(null,    "5",    null,    "6",    "9",    null,    "2",    "3",    "1"),
+            arrayOf(null,    "2",    null,    null,    "5",    null,    null,    "9",    null),
+            arrayOf(null,    "9",    null,    "7",    null,    null,    "3",    "2",    null),
+            arrayOf(null,    null,    "2",    "9",    "3",    "5",    "6",    null,    "7"),
+            arrayOf(null,    "7",    null,    null,    null,    "2",    "9",    null,    null),
+            arrayOf(null,    "6",    "9",    null,    "2",    null,    null,    "7",    "3"),
+            arrayOf("5",    "1",    null,    null,    "7",    "9",    null,    "6",    "2"),
+            arrayOf("2",    null,    "7",    null,    "8",    "6",    null,    null,    "9")
+        )
+        val solver = SudokuSolver(sudoku)
+        solver.nakedPair()
+        solver.candidateLines()
+        solver.candidateLines()
+        solver.candidateLines()
+        solver.candidateLines()
+        assertArrayEquals(arrayOf(
+            arrayOf(0b000000000, 0b010000100, 0b010100101, 0b000000000, 0b000000000, 0b011000101, 0b001010000, 0b010010000, 0b010110000),
+            arrayOf(0b011001000, 0b000000000, 0b010001000, 0b000000000, 0b000000000, 0b011000000, 0b000000000, 0b000000000, 0b000000000),
+            arrayOf(0b011100101, 0b000000000, 0b010100101, 0b010000001, 0b000000000, 0b011000101, 0b001001000, 0b000000000, 0b010101000),
+            arrayOf(0b010101001, 0b000000000, 0b010111001, 0b000000000, 0b000100001, 0b010001000, 0b000000000, 0b000000000, 0b010011000),
+            arrayOf(0b010001001, 0b010001000, 0b000000000, 0b000000000, 0b000000000, 0b000000000, 0b000000000, 0b010001001, 0b000000000),
+            arrayOf(0b010101101, 0b000000000, 0b010111101, 0b010001000, 0b000100001, 0b000000000, 0b000000000, 0b010011001, 0b010011000),
+            arrayOf(0b010001000, 0b000000000, 0b000000000, 0b000011001, 0b000000000, 0b000001001, 0b010011001, 0b000000000, 0b000000000),
+            arrayOf(0b000000000, 0b000000000, 0b010001100, 0b000001100, 0b000000000, 0b000000000, 0b010001000, 0b000000000, 0b000000000),
+            arrayOf(0b000000000, 0b000001100, 0b000000000, 0b000011101, 0b000000000, 0b000000000, 0b000011001, 0b000011000, 0b000000000)
+        ), solver.candidates)
+
+        assertEquals(2500, solver.yWing())
+        assertEquals(2500, solver.yWing())
+        assertArrayEquals(arrayOf(
+            arrayOf(0b000000000, 0b010000100, 0b010100101, 0b000000000, 0b000000000, 0b011000101, 0b001010000, 0b010010000, 0b010110000),
+            arrayOf(0b011001000, 0b000000000, 0b010001000, 0b000000000, 0b000000000, 0b011000000, 0b000000000, 0b000000000, 0b000000000),
+            arrayOf(0b011100101, 0b000000000, 0b010100101, 0b010000001, 0b000000000, 0b011000101, 0b001001000, 0b000000000, 0b010101000),
+            arrayOf(0b010101001, 0b000000000, 0b010111001, 0b000000000, 0b000100001, 0b010001000, 0b000000000, 0b000000000, 0b010011000),
+            arrayOf(0b010001001, 0b010001000, 0b000000000, 0b000000000, 0b000000000, 0b000000000, 0b000000000, 0b010001001, 0b000000000),
+            arrayOf(0b010101101, 0b000000000, 0b010111101, 0b010001000, 0b000100001, 0b000000000, 0b000000000, 0b010011001, 0b010011000),
+            arrayOf(0b010001000, 0b000000000, 0b000000000, 0b000010001, 0b000000000, 0b000000001, 0b010011001, 0b000000000, 0b000000000),
+            arrayOf(0b000000000, 0b000000000, 0b010000100, 0b000001100, 0b000000000, 0b000000000, 0b010001000, 0b000000000, 0b000000000),
+            arrayOf(0b000000000, 0b000001100, 0b000000000, 0b000011101, 0b000000000, 0b000000000, 0b000011001, 0b000011000, 0b000000000)
+        ), solver.candidates)
+    }
+
+    @Test
     fun singleChainsTest() {
         val sudoku = arrayOf<Array<String?>>(
             arrayOf(null,    null,    "7",    null,    "8",    "3",    "6",    null,    null),
@@ -542,7 +588,7 @@ class SudokuSolverUnitTest {
             arrayOf(0b000000000, 0b000010001, 0b000000000, 0b000000000, 0b000000000, 0b000001001, 0b000000000, 0b000000000, 0b000011000)
         ), solver.candidates)
 
-        assertEquals(2100, solver.singleChains())
+        assertEquals(3000, solver.singleChains())
         assertArrayEquals(arrayOf(
             arrayOf(0b000011001, 0b000010001, 0b000000000, 0b000010010, 0b000000000, 0b000000000, 0b000000000, 0b100001001, 0b100001011),
             arrayOf(0b000011001, 0b000000000, 0b000000000, 0b000000000, 0b000010010, 0b000000000, 0b000000000, 0b000001001, 0b000001011),
@@ -554,7 +600,7 @@ class SudokuSolverUnitTest {
             arrayOf(0b000000000, 0b000000000, 0b000000000, 0b000000000, 0b000010010, 0b000010010, 0b000000000, 0b000000000, 0b000000000),
             arrayOf(0b000000000, 0b000010001, 0b000000000, 0b000000000, 0b000000000, 0b000001001, 0b000000000, 0b000000000, 0b000011000)
         ), solver.candidates)
-        assertEquals(2100, solver.singleChains())
+        assertEquals(3000, solver.singleChains())
         assertArrayEquals(arrayOf<Array<String?>>(
             arrayOf(null,    null,    "7",    null,    "8",    "3",    "6",    null,    null),
             arrayOf(null,    "3",    "9",    "7",    "5",    "6",    "8",    null,    null),
