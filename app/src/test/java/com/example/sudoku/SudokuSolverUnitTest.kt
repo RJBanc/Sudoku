@@ -73,6 +73,20 @@ class SudokuSolverUnitTest {
         )
         val solverNoSol = SudokuSolver(sudokuNoSol)
         assertFalse(solverNoSol.solve())
+
+        val sudokuNoTech = arrayOf<Array<String?>>(
+            arrayOf(null,    null,    null,    "7",    null,    "4",    null,    null,    "5"),
+            arrayOf(null,    "2",    null,    null,    "1",    null,    null,    "7",    null),
+            arrayOf(null,    null,    null,    null,    "8",    null,    null,    null,    "2"),
+            arrayOf(null,    "9",    null,    null,    null,    "6",    "2",    "5",    null),
+            arrayOf("6",    null,    null,    null,    "7",    null,    null,    null,    "8"),
+            arrayOf(null,    "5",    "3",    "2",    null,    null,    null,    "1",    null),
+            arrayOf("4",    null,    null,    null,    "9",    null,    null,    null,    null),
+            arrayOf(null,    "3",    null,    null,    "6",    null,    null,    "9",    null),
+            arrayOf("2",    null,    null,    "4",    null,    "7",    null,    null,    null)
+        )
+        val solverNoTech = SudokuSolver(sudokuNoTech)
+        assertFalse(solverNoTech.solve())
     }
 
     @Test
