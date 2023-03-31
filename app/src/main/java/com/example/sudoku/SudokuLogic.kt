@@ -4,7 +4,7 @@ import androidx.lifecycle.MutableLiveData
 import kotlin.random.Random
 import kotlin.random.nextInt
 
-class SudokuLogic {
+class SudokuLogic() {
     private var difficulty: Difficulty? = null
     private val fields: Array<Array<MutableLiveData<SudokuField>>>
     private var solution: Array<Array<String?>>
@@ -12,7 +12,7 @@ class SudokuLogic {
     private var lastHighlighted: Array<MutableLiveData<SudokuField>>? = null
     private var currFieldCoords: Pair<Int, Int>? = null
 
-    constructor() {
+    init {
         fields  = Array(9) {
             Array(9) {
                 MutableLiveData<SudokuField>(
@@ -147,7 +147,7 @@ class SudokuLogic {
         return true
     }
 
-    private fun makeSolution(): Boolean {
+    internal fun makeSolution(): Boolean {
         var row = 0
         var col = 0
         for (i in 0..81) {
@@ -174,7 +174,7 @@ class SudokuLogic {
         return false
     }
 
-    private fun checkNumSolutions(grid: Array<Array<String?>>): Int {
+     internal fun checkNumSolutions(grid: Array<Array<String?>>): Int {
         var numSolutions = 0
         fun checkNumSolutionsRec(grid: Array<Array<String?>>) {
             var row = 0
