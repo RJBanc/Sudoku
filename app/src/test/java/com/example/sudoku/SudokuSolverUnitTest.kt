@@ -34,6 +34,48 @@ class SudokuSolverUnitTest {
     }
 
     @Test
+    fun solveTest() {
+        val sudoku = arrayOf<Array<String?>>(
+            arrayOf("3",    null,    "9",    null,    null,    null,    "4",    null,    null),
+            arrayOf("2",    null,    null,    "7",    null,    "9",    null,    null,    null),
+            arrayOf(null,    "8",    "7",    null,    null,    null,    null,    null,    null),
+            arrayOf("7",    "5",    null,    null,    "6",    null,    "2",    "3",    null),
+            arrayOf("6",    null,    null,    "9",    null,    "4",    null,    null,    "8"),
+            arrayOf(null,    "2",    "8",    null,    "5",    null,    null,    "4",    "1"),
+            arrayOf(null,    null,    null,    null,    null,    null,    "5",    "9",    null),
+            arrayOf(null,    null,    null,    "1",    null,    "6",    null,    null,    "7"),
+            arrayOf(null,    null,    "6",    null,    null,    null,    "1",    null,    "4")
+        )
+        val solver = SudokuSolver(sudoku)
+        assertTrue(solver.solve())
+        assertArrayEquals(arrayOf<Array<String?>>(
+            arrayOf("3",    "6",    "9",    "2",    "1",    "8",    "4",    "7",    "5"),
+            arrayOf("2",    "1",    "5",    "7",    "4",    "9",    "8",    "6",    "3"),
+            arrayOf("4",    "8",    "7",    "6",    "3",    "5",    "9",    "1",    "2"),
+            arrayOf("7",    "5",    "4",    "8",    "6",    "1",    "2",    "3",    "9"),
+            arrayOf("6",    "3",    "1",    "9",    "2",    "4",    "7",    "5",    "8"),
+            arrayOf("9",    "2",    "8",    "3",    "5",    "7",    "6",    "4",    "1"),
+            arrayOf("1",    "7",    "3",    "4",    "8",    "2",    "5",    "9",    "6"),
+            arrayOf("5",    "4",    "2",    "1",    "9",    "6",    "3",    "8",    "7"),
+            arrayOf("8",    "9",    "6",    "5",    "7",    "3",    "1",    "2",    "4")
+        ), sudoku)
+
+        val sudokuNoSol = arrayOf<Array<String?>>(
+            arrayOf(null,    "4",    "2",    null,    null,    "7",    "1",    "9",    "5"),
+            arrayOf("5",    "1",    null,    null,    null,    "6",    "7",    "4",    "3"),
+            arrayOf(null,    "9",    null,    "5",    "4",    null,    null,    "8",    null),
+            arrayOf("9",    "7",    "5",    null,    "6",    null,    "8",    null,    "1"),
+            arrayOf("8",    "6",    null,    "7",    null,    null,    null,    null,    "4"),
+            arrayOf(null,    null,    "4",    "1",    "5",    "8",    null,    null,    null),
+            arrayOf("4",    null,    null,    null,    null,    null,    "5",    null,    "8"),
+            arrayOf("2",    "8",    null,    "6",    null,    null,    null,    "3",    null),
+            arrayOf(null,    null,    null,    "8",    null,    "4",    "2",    "7",    null)
+        )
+        val solverNoSol = SudokuSolver(sudokuNoSol)
+        assertFalse(solverNoSol.solve())
+    }
+
+    @Test
     fun addNumberStringTest() {
         val sudoku = arrayOf<Array<String?>>(
             arrayOf("9",    null,   "2",    null,   null,   "4",    "3",    "8",    "5"),

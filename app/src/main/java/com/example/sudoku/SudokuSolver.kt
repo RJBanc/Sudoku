@@ -1,8 +1,7 @@
 package com.example.sudoku
 
-class SudokuSolver {
+class SudokuSolver(private var grid: Array<Array<String?>>) {
     internal val candidates = Array(9) { Array(9) { 0b111111111 } }
-    private var grid: Array<Array<String?>>
     private var emptyCells = 81
 
     private val stringToBitMap = mapOf<String?, Int>(
@@ -45,27 +44,13 @@ class SudokuSolver {
         "bug" to Pair(8000, 6000)
     )
 
-    private val techniqueUses = mutableMapOf(
-        "singleCandPos" to 0,
-        "candLine" to 0,
-        "boxLine" to 0,
-        "nakedPair" to 0,
-        "hiddenPair" to 0,
-        "nakedTrip" to 0,
-        "hiddenTrip" to 0,
-        "xWing" to 0,
-        "yWing" to 0,
-        "singChain" to 0,
-        "nakedQuad" to 0,
-        "hiddenQuad" to 0,
-        "swordfish" to 0,
-        "bug" to 0
-    )
+    private val techniqueUses = buildMap {
+        for (key in techniqueCosts.keys)
+            put(key, 0)
+    }.toMutableMap()
 
 
-    constructor(grid: Array<Array<String?>>) {
-        this.grid = grid
-
+    init {
         for (row in 0..8) {
             for (col in 0..8) {
                 if (grid[row][col] == null) {
@@ -78,6 +63,40 @@ class SudokuSolver {
                     BitUtil.removeBits(it, stringToBitMap.getValue(grid[row][col]))
                 }
             }
+        }
+    }
+
+    fun solve(): Boolean {
+        val techniques = listOf(
+            ::singleCandidatePosition,
+            ::candidateLines,
+            ::boxLineReduction,
+            ::nakedPair,
+            ::hiddenPair,
+            ::nakedTriple,
+            ::hiddenTriple,
+            ::xWing,
+            ::yWing,
+            ::singleChains,
+            ::nakedQuad,
+            ::hiddenQuad,
+            ::swordfish,
+            ::BUG
+        )
+        try {
+            var index = 0
+            while (index < techniques.size) {
+                if (finished())
+                    return true
+                if (techniques[index]())
+                    index = 0
+                else
+                    index++
+            }
+            throw NoSolutionException("No technique applicable")
+
+        } catch (e: NoSolutionException) {
+            return false
         }
     }
 
@@ -442,10 +461,10 @@ class SudokuSolver {
                 SudokuUtil.getSquare(candidates, i)).withIndex()
             ) {
                 val cellsPerNum = Array(9) {0}
-                for (i in arr.indices) {
-                    for (j in cellsPerNum.indices) {
-                        if ((arr[i] ushr j) and 1 == 1)
-                            cellsPerNum[j] = cellsPerNum[j] or (1 shl i)
+                for (j in arr.indices) {
+                    for (k in cellsPerNum.indices) {
+                        if ((arr[j] ushr k) and 1 == 1)
+                            cellsPerNum[k] = cellsPerNum[k] or (1 shl j)
                     }
                 }
 
@@ -833,10 +852,10 @@ class SudokuSolver {
                 SudokuUtil.getSquare(candidates, i)).withIndex()
             ) {
                 val cellsPerNum = Array(9) {0}
-                for (i in arr.indices) {
-                    for (j in cellsPerNum.indices) {
-                        if ((arr[i] ushr j) and 1 == 1)
-                            cellsPerNum[j] = cellsPerNum[j] or (1 shl i)
+                for (j in arr.indices) {
+                    for (k in cellsPerNum.indices) {
+                        if ((arr[j] ushr k) and 1 == 1)
+                            cellsPerNum[k] = cellsPerNum[k] or (1 shl j)
                     }
                 }
 
