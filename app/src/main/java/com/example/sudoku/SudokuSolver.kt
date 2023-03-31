@@ -3,6 +3,7 @@ package com.example.sudoku
 class SudokuSolver {
     internal val candidates = Array(9) { Array(9) { 0b111111111 } }
     private var grid: Array<Array<String?>>
+    private var emptyCells = 81
 
     private val stringToBitMap = mapOf<String?, Int>(
         "1" to 0b1,
@@ -37,6 +38,7 @@ class SudokuSolver {
                     continue
                 }
 
+                emptyCells--
                 candidates[row][col] = 0
                 SudokuUtil.applyToRelevantValues(candidates, row, col) {
                     BitUtil.removeBits(it, stringToBitMap.getValue(grid[row][col]))
@@ -51,6 +53,7 @@ class SudokuSolver {
         SudokuUtil.applyToRelevantValues(candidates, row, col) {
             BitUtil.removeBits(it, stringToBitMap.getValue(numb))
         }
+        emptyCells--
     }
 
     fun addNumber(numb: Int, row: Int, col: Int) {
@@ -59,35 +62,16 @@ class SudokuSolver {
         SudokuUtil.applyToRelevantValues(candidates, row, col) {
             BitUtil.removeBits(it, numb)
         }
+        emptyCells--
     }
 
-//    fun removeNumber(row: Int, col: Int) {
-//        val temp = grid[row][col]!!
-//        grid[row][col] = null
-//
-//        for (cands in SudokuUtil.getRelevantValues(candidates, row, col)) {
-//                cands.add(temp)
-//        }
-//
-//        for (row in 0..8) {
-//            for (col in 0..8) {
-//                if (grid[row][col] != temp) {
-//                    continue
-//                }
-//
-//                for (cands in SudokuUtil.getRelevantValues(candidates, row, col)) {
-//                    cands.remove(temp)
-//                }
-//            }
-//        }
-//
-//        candidates[row][col] = MutableList(9) { (it + 1).toString() }
-//        for (numb in SudokuUtil.getRelevantValues(grid, row, col)) {
-//            if (numb != null) {
-//                candidates[row][col].remove(numb)
-//            }
-//        }
-//    }
+    fun solved(): Boolean {
+        return emptyCells == 0
+    }
+
+    fun difficulty(): Int {
+        return 0
+    }
 
     fun singleCandidatePosition(): Int {
         var difficultyScore = 0
