@@ -28,6 +28,40 @@ class SudokuSolver {
         0b100000000 to "9"
     )
 
+    private val techniqueCosts = mapOf(
+        "singleCandPos" to Pair(100, 100),
+        "candLine" to Pair(350, 200),
+        "boxLine" to Pair(600, 300),
+        "nakedPair" to Pair(750, 500),
+        "hiddenPair" to Pair(1500, 1200),
+        "nakedTrip" to Pair(2000, 1400),
+        "hiddenTrip" to Pair(2400, 1600),
+        "xWing" to Pair(2800, 1600),
+        "yWing" to Pair(3600, 2000),
+        "singChain" to Pair(4200, 2100),
+        "nakedQuad" to Pair(5000, 4000),
+        "hiddenQuad" to Pair(7000, 5000),
+        "swordfish" to Pair(8000, 6000),
+        "bug" to Pair(8000, 6000)
+    )
+
+    private val techniqueUses = mutableMapOf(
+        "singleCandPos" to 0,
+        "candLine" to 0,
+        "boxLine" to 0,
+        "nakedPair" to 0,
+        "hiddenPair" to 0,
+        "nakedTrip" to 0,
+        "hiddenTrip" to 0,
+        "xWing" to 0,
+        "yWing" to 0,
+        "singChain" to 0,
+        "nakedQuad" to 0,
+        "hiddenQuad" to 0,
+        "swordfish" to 0,
+        "bug" to 0
+    )
+
 
     constructor(grid: Array<Array<String?>>) {
         this.grid = grid
@@ -65,16 +99,22 @@ class SudokuSolver {
         emptyCells--
     }
 
-    fun solved(): Boolean {
+    fun finished(): Boolean {
         return emptyCells == 0
     }
 
-    fun difficulty(): Int {
-        return 0
+    fun difficultyScore(): Int {
+        var score = 0
+        for ((key, value) in techniqueUses.entries) {
+            if (value == 0) continue
+
+            score += techniqueCosts[key]!!.first + (techniqueCosts[key]!!.second * (value - 1))
+        }
+        return score
     }
 
-    fun singleCandidatePosition(): Int {
-        var difficultyScore = 0
+    fun singleCandidatePosition(): Boolean {
+        var uses = 0
 
         val rowUnique = Array(9) {
             BitUtil.uniqueBits(SudokuUtil.getRow(candidates, it))
@@ -97,24 +137,25 @@ class SudokuSolver {
 
                 if (BitUtil.oneBitSet(candidates[row][col])) {
                     addNumber(candidates[row][col], row, col)
-                    difficultyScore += 100
+                    uses++
                 }
 
                 val squ = SudokuUtil.coordsSquareConversion(row, col).first
                 val relevantUnique = rowUnique[row] or colUnique[col] or squareUnique[squ]
                 if (BitUtil.oneBitSet(relevantUnique and candidates[row][col])) {
                     addNumber(relevantUnique and candidates[row][col], row, col)
-                    difficultyScore += 100
+                    uses++
                 } else if (relevantUnique and candidates[row][col] > 0) {
                     throw NoSolutionException("Single Position for multiple numbers")
                 }
             }
         }
 
-        return difficultyScore
+        techniqueUses["singleCandPos"] = (techniqueUses["singleCandPos"] ?: 0) + uses
+        return uses > 0
     }
 
-    fun candidateLines(): Int {
+    fun candidateLines(): Boolean {
         for (i in 0..2) {
             for (j in 0..2) {
                 val square = SudokuUtil.getSquareAsMat(candidates, i * 3, j * 3)
@@ -146,8 +187,10 @@ class SudokuSolver {
                         candidates[(i * 3) + k][(j * 3) + l] = square[k][l]
                     }
 
-                    if (eliminatedCands)
-                        return 200
+                    if (eliminatedCands) {
+                        techniqueUses["candLine"] = (techniqueUses["candLine"] ?: 0) + 1
+                        return true
+                    }
                 }
 
                 for (k in colCands.indices) {
@@ -171,16 +214,18 @@ class SudokuSolver {
                         candidates[(i * 3) + l][(j * 3) + k] = square[l][k]
                     }
 
-                    if (eliminatedCands)
-                        return 200
+                    if (eliminatedCands) {
+                        techniqueUses["candLine"] = (techniqueUses["candLine"] ?: 0) + 1
+                        return true
+                    }
                 }
             }
         }
 
-        return 0
+        return false
     }
 
-    fun boxLineReduction(): Int {
+    fun boxLineReduction(): Boolean {
         for (i in 0..2) {
             for (j in 0..2) {
                 val square = SudokuUtil.getSquareAsMat(candidates, i * 3, j * 3)
@@ -212,8 +257,10 @@ class SudokuSolver {
                         candidates[(i * 3) + k][(j * 3) + l] = square[k][l]
                     }
 
-                    if (eliminatedCands)
-                        return 350
+                    if (eliminatedCands) {
+                        techniqueUses["boxLine"] = (techniqueUses["boxLine"] ?: 0) + 1
+                        return true
+                    }
                 }
 
                 for (k in colCands.indices) {
@@ -237,16 +284,18 @@ class SudokuSolver {
                         candidates[(i * 3) + l][(j * 3) + k] = square[l][k]
                     }
 
-                    if (eliminatedCands)
-                        return 350
+                    if (eliminatedCands) {
+                        techniqueUses["boxLine"] = (techniqueUses["boxLine"] ?: 0) + 1
+                        return true
+                    }
                 }
             }
         }
 
-        return 0
+        return false
     }
 
-    fun nakedPair(): Int {
+    fun nakedPair(): Boolean {
         for (i in 0..8) {
             for ((arrIndex, arr) in arrayOf(
                 SudokuUtil.getRow(candidates, i),
@@ -274,8 +323,10 @@ class SudokuSolver {
                             2 -> SudokuUtil.applyToSquare(candidates, i, transform)
                         }
 
-                        if (eliminatedCands)
-                            return 500
+                        if (eliminatedCands) {
+                            techniqueUses["nakedPair"] = (techniqueUses["nakedPair"] ?: 0) + 1
+                            return true
+                        }
                     }
 
                     potentialPairs.add(num)
@@ -283,10 +334,10 @@ class SudokuSolver {
             }
         }
 
-        return 0
+        return false
     }
 
-    fun hiddenPair(): Int {
+    fun hiddenPair(): Boolean {
         for (i in 0..8) {
             for ((arrIndex, arr) in arrayOf(
                 SudokuUtil.getRow(candidates, i),
@@ -324,16 +375,17 @@ class SudokuSolver {
                             }
                         }
 
-                        return 1200
+                        techniqueUses["hiddenPair"] = (techniqueUses["hiddenPair"] ?: 0) + 1
+                        return true
                     }
                 }
             }
         }
 
-        return 0
+        return false
     }
 
-    fun nakedTriple(): Int {
+    fun nakedTriple(): Boolean {
         for (i in 0..8) {
             for ((arrIndex, arr) in arrayOf(
                 SudokuUtil.getRow(candidates, i),
@@ -368,8 +420,10 @@ class SudokuSolver {
                             1 -> SudokuUtil.applyToColumn(candidates, i, transform)
                             2 -> SudokuUtil.applyToSquare(candidates, i, transform)
                         }
-                        if (eliminatedCands)
-                            return 1400
+                        if (eliminatedCands) {
+                            techniqueUses["nakedTrip"] = (techniqueUses["nakedTrip"] ?: 0) + 1
+                            return true
+                        }
                     }
                     val newPotential = Pair(num, 1)
                     potentialTriplets.add(newPotential)
@@ -377,10 +431,10 @@ class SudokuSolver {
             }
         }
 
-        return 0
+        return false
     }
 
-    fun hiddenTriple(): Int {
+    fun hiddenTriple(): Boolean {
         for (i in 0..8) {
             for ((arrIndex, arr) in arrayOf(
                 SudokuUtil.getRow(candidates, i),
@@ -452,8 +506,10 @@ class SudokuSolver {
                             }
                         }
 
-                        if (eliminatedCands)
-                            return 1600
+                        if (eliminatedCands) {
+                            techniqueUses["hiddenTrip"] = (techniqueUses["hiddenTrip"] ?: 0) + 1
+                            return true
+                        }
                     }
                     val newPotential = Triple(cells, 1, 1 shl num)
                     potentialTriplets.add(newPotential)
@@ -461,10 +517,10 @@ class SudokuSolver {
             }
         }
 
-        return 0
+        return false
     }
 
-    fun xWing(): Int {
+    fun xWing(): Boolean {
         for (num in 0..8) {
             val numRow = Array(9) {
                 var cells = 0
@@ -495,8 +551,10 @@ class SudokuSolver {
                         }
                     }
 
-                    if (eliminatedCands)
-                        return 1600
+                    if (eliminatedCands) {
+                        techniqueUses["xWing"] = (techniqueUses["xWing"] ?: 0) + 1
+                        return true
+                    }
                 }
             }
         }
@@ -532,16 +590,18 @@ class SudokuSolver {
                         }
                     }
 
-                    if (eliminatedCands)
-                        return 1600
+                    if (eliminatedCands) {
+                        techniqueUses["xWing"] = (techniqueUses["xWing"] ?: 0) + 1
+                        return true
+                    }
                 }
             }
         }
 
-        return 0
+        return false
     }
 
-    fun yWing(): Int {
+    fun yWing(): Boolean {
         for (row in 0..8) {
             for (col in 0..8) {
                 val ab = candidates[row][col]
@@ -578,18 +638,20 @@ class SudokuSolver {
                             )
                         }
 
-                        if (eliminatedCands)
-                            return 2500
+                        if (eliminatedCands) {
+                            techniqueUses["yWing"] = (techniqueUses["yWing"] ?: 0) + 1
+                            return true
+                        }
                     }
                     corners.add(coord)
                 }
             }
         }
 
-        return 0
+        return false
     }
 
-    fun singleChains(): Int {
+    fun singleChains(): Boolean {
         for (num in Array(9) { 1 shl it }) {
             val rowCells = Array(9) {
                 var cells = 0
@@ -670,7 +732,8 @@ class SudokuSolver {
                                     }
                                 }
 
-                                return 3000
+                                techniqueUses["singChain"] = (techniqueUses["singChain"] ?: 0) + 1
+                                return true
                             }
                             else if (arr.count { it == false } == 2) {
                                 for (cRow in 0..8) {
@@ -680,7 +743,8 @@ class SudokuSolver {
                                     }
                                 }
 
-                                return 3000
+                                techniqueUses["singChain"] = (techniqueUses["singChain"] ?: 0) + 1
+                                return true
                             }
                         }
                     }
@@ -701,16 +765,18 @@ class SudokuSolver {
                             }
                         }
                     }
-                    if (eliminatedCands)
-                        return 3000
+                    if (eliminatedCands) {
+                        techniqueUses["singChain"] = (techniqueUses["singChain"] ?: 0) + 1
+                        return true
+                    }
                 }
             }
         }
 
-        return 0
+        return false
     }
 
-    fun nakedQuad(): Int {
+    fun nakedQuad(): Boolean {
         for (i in 0..8) {
             for ((arrIndex, arr) in arrayOf(
                 SudokuUtil.getRow(candidates, i),
@@ -745,8 +811,10 @@ class SudokuSolver {
                             1 -> SudokuUtil.applyToColumn(candidates, i, transform)
                             2 -> SudokuUtil.applyToSquare(candidates, i, transform)
                         }
-                        if (eliminatedCands)
-                            return 4000
+                        if (eliminatedCands) {
+                            techniqueUses["nakedQuad"] = (techniqueUses["nakedQuad"] ?: 0) + 1
+                            return true
+                        }
                     }
                     val newPotential = Pair(num, 1)
                     potentialQuads.add(newPotential)
@@ -754,10 +822,10 @@ class SudokuSolver {
             }
         }
 
-        return 0
+        return false
     }
 
-    fun hiddenQuad(): Int {
+    fun hiddenQuad(): Boolean {
         for (i in 0..8) {
             for ((arrIndex, arr) in arrayOf(
                 SudokuUtil.getRow(candidates, i),
@@ -829,8 +897,10 @@ class SudokuSolver {
                             }
                         }
 
-                        if (eliminatedCands)
-                            return 5000
+                        if (eliminatedCands) {
+                            techniqueUses["hiddenQuad"] = (techniqueUses["hiddenQuad"] ?: 0) + 1
+                            return true
+                        }
                     }
                     val newPotential = Triple(cells, 1, 1 shl num)
                     potentialQuads.add(newPotential)
@@ -838,10 +908,10 @@ class SudokuSolver {
             }
         }
 
-        return 0
+        return false
     }
 
-    fun swordfish(): Int {
+    fun swordfish(): Boolean {
         val cellsPerNumRows = Array(9) { num ->
             Array(9) { rowIndex ->
                 var cells = 0
@@ -887,8 +957,10 @@ class SudokuSolver {
                         }
                     }
 
-                    if (eliminatedCands)
-                        return 6000
+                    if (eliminatedCands) {
+                        techniqueUses["swordfish"] = (techniqueUses["swordfish"] ?: 0) + 1
+                        return true
+                    }
                 }
                 potentialFish.add(Pair(numRow[i], 1))
             }
@@ -939,29 +1011,31 @@ class SudokuSolver {
                         }
                     }
 
-                    if (eliminatedCands)
-                        return 6000
+                    if (eliminatedCands) {
+                        techniqueUses["swordfish"] = (techniqueUses["swordfish"] ?: 0) + 1
+                        return true
+                    }
                 }
                 potentialFish.add(Pair(numCol[i], 1))
             }
         }
 
-        return 0
+        return false
     }
 
-    fun BUG(): Int {
+    fun BUG(): Boolean {
         var triPose: Pair<Int, Int>? = null
         for (row in 0..8) {
             for (col in 0..8) {
-                if (BitUtil.countBits(candidates[row][col]) > 3) return 0
+                if (BitUtil.countBits(candidates[row][col]) > 3) return false
                 if (BitUtil.countBits(candidates[row][col]) == 3) {
                     if (triPose != null)
-                        return 0
+                        return false
                     triPose = Pair(row, col)
                 }
             }
         }
-        if (triPose == null) return 0
+        if (triPose == null) return false
 
         val tmp = candidates[triPose.first][triPose.second]
         candidates[triPose.first][triPose.second] = 0
@@ -969,6 +1043,7 @@ class SudokuSolver {
         val solution = tmp xor BitUtil.uniqueBits(rowBits)
         addNumber(solution, triPose.first, triPose.second)
 
-        return 6500
+        techniqueUses["bug"] = (techniqueUses["bug"] ?: 0) + 1
+        return true
     }
 }
