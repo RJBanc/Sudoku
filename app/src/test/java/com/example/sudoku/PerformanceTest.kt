@@ -21,15 +21,15 @@ class PerformanceTest {
     @Test
     fun solverVsBrute() {
         val sudoku = arrayOf<Array<String?>>(
-            arrayOf("3",    null,    "9",    null,    null,    null,    "4",    null,    null),
-            arrayOf("2",    null,    null,    "7",    null,    "9",    null,    null,    null),
-            arrayOf(null,    "8",    "7",    null,    null,    null,    null,    null,    null),
-            arrayOf("7",    "5",    null,    null,    "6",    null,    "2",    "3",    null),
-            arrayOf("6",    null,    null,    "9",    null,    "4",    null,    null,    "8"),
-            arrayOf(null,    "2",    "8",    null,    "5",    null,    null,    "4",    "1"),
-            arrayOf(null,    null,    null,    null,    null,    null,    "5",    "9",    null),
-            arrayOf(null,    null,    null,    "1",    null,    "6",    null,    null,    "7"),
-            arrayOf(null,    null,    "6",    null,    null,    null,    "1",    null,    "4")
+            arrayOf("9",    "4",    "6",    "1",    "7",    null,    "3",    null,    null),
+            arrayOf("2",    null,    null,    "8",    null,    null,    "6",    null,    null),
+            arrayOf("7",    "8",    "3",    "6",    null,    null,    null,    null,    null),
+            arrayOf(null,    null,    null,    null,    "8",    null,    "5",    null,    null),
+            arrayOf(null,    null,    null,    "4",    null,    "9",    null,    null,    null),
+            arrayOf("4",    null,    "8",    "2",    "5",    null,    "1",    "6",    null),
+            arrayOf(null,    "5",    null,    null,    "2",    null,    null,    "9",    null),
+            arrayOf(null,    "7",    null,    "9",    "3",    "4",    null,    "5",    null),
+            arrayOf(null,    null,    null,    "5",    null,    "8",    null,    null,    null)
         )
 
         val sudokuLogic = SudokuLogic()
