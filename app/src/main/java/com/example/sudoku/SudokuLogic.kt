@@ -95,12 +95,7 @@ class SudokuLogic() {
                 notes = notes
             ))
         } else {
-            currField.postValue(
-                currField.value!!.copy(
-                number = if(currField.value!!.number != s) s else null,
-                notes = currField.value!!.notes.clone()
-            ))
-            for (field in SudokuUtil.getRelevantValues(fields, currFieldCoords!!.first, currFieldCoords!!.second)) {
+            for (field in SudokuUtil.getRelevantValues(fields, currFieldCoords!!.first, currFieldCoords!!.second)) { //TODO auch currField gehoert zu relevant Values
                 val newNotes = field.value!!.notes.clone()
                 newNotes[s.toInt() - 1] = null
                 field.postValue(
@@ -109,6 +104,14 @@ class SudokuLogic() {
                     )
                 )
             }
+            val newNotes = currField.value!!.notes.clone()
+            newNotes[s.toInt() - 1] = null
+            currField.postValue(
+                currField.value!!.copy(
+                    number = if(currField.value!!.number != s) s else null,
+                    notes = newNotes
+                )
+            )
         }
     }
 
@@ -219,6 +222,7 @@ data class SudokuField(
 
         if (isEnabled != other.isEnabled) return false
         if (isHighlighted != other.isHighlighted) return false
+        if (solution != other.solution) return false
         if (number != other.number) return false
         if (!notes.contentEquals(other.notes)) return false
 
