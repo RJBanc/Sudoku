@@ -38,10 +38,10 @@ class SudokuSolver(private var grid: Array<Array<String?>>) {
         "xWing" to Pair(2800, 1600),
         "yWing" to Pair(3600, 2000),
         "singChain" to Pair(4200, 2100),
-        "nakedQuad" to Pair(5000, 4000),
+        "nakedQuad" to Pair(3000, 2300),
         "hiddenQuad" to Pair(7000, 5000),
         "swordfish" to Pair(8000, 6000),
-        "bug" to Pair(8000, 6000)
+        "bug" to Pair(1500, 1200)
     )
 
     private val techniqueUses = buildMap {
