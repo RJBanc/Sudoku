@@ -5,7 +5,7 @@ import kotlin.random.Random
 import kotlin.random.nextInt
 
 class SudokuLogic() {
-    private var difficulty: Difficulty? = null
+    private var difficulty: Difficulty = Difficulty.EASY
     private val fields: Array<Array<MutableLiveData<SudokuField>>>
     private var solution: Array<Array<String?>>
     private val symbols = arrayOf("1", "2", "3", "4", "5", "6", "7", "8", "9")
@@ -26,43 +26,44 @@ class SudokuLogic() {
         solution = Array(9) { arrayOfNulls<String>(9) }
     }
 
-    fun newGame(difficulty: Difficulty? = null) {
+    fun newGame(difficulty: Difficulty = this.difficulty) {
         this.difficulty = difficulty
 
-        solution = Array(9) { arrayOfNulls<String>(9) }
-        makeSolution()
+        val difficultyRange = mapOf(
+            Difficulty.BEGINNER to 3600..4500,
+            Difficulty.EASY to 4300..5500,
+            Difficulty.MEDIUM to 5300..6900,
+            Difficulty.HARD to 6500..9300,
+            Difficulty.EVIL to 8300..14000,
+            Difficulty.DIABOLICAL to 11000..25000
+        )
 
-        var attempts = 3
-        val sudoku = solution.copy()
+        val sudoku = Array(9) { arrayOfNulls<String>(9) }
         val backup = ArrayDeque<Triple<Int, Int, String?>>()
 
-        var initialNumbsTaken = 30
-        do {
-            val row = Random.nextInt(0..8)
-            val col = Random.nextInt(0..8)
-            if (sudoku[row][col] != null) {
-                backup.addLast(Triple(row, col, sudoku[row][col]))
-                initialNumbsTaken -= 1
+        prepareSudoku(sudoku, backup)
+
+        var difficultyScore = 0
+        var attempts = 30
+        while (difficultyScore !in difficultyRange[this.difficulty]!!) {
+            if (difficultyScore < difficultyRange[this.difficulty]!!.first)
+                removeRandomNum(sudoku, backup)
+            else if (difficultyScore > difficultyRange[this.difficulty]!!.last) {
+                val addVal = backup.removeLast()
+                sudoku[addVal.first][addVal.second] = addVal.third
             }
-        } while(initialNumbsTaken > 0)
 
-        while (attempts > 0) {
-            var row: Int
-            var col: Int
-
-            do {
-                row = Random.nextInt(0..8)
-                col = Random.nextInt(0..8)
-            } while(sudoku[row][col] == null)
-            backup.addLast(Triple(row, col, sudoku[row][col]))
-            sudoku[row][col] = null
-
-            var trySolve = sudoku.copy()
-            while (checkNumSolutions(trySolve) != 1) {
-                val stackTop = backup.removeLast()
-                sudoku[stackTop.first][stackTop.second] = stackTop.third
-                trySolve = sudoku.copy()
-                attempts -= 1
+            val solver = SudokuSolver(sudoku.copy())
+            if (!solver.solve()) {
+                if (attempts-- == 0) {
+                    attempts = 30
+                    prepareSudoku(sudoku, backup)
+                    continue
+                }
+                val addVal = backup.removeLast()
+                sudoku[addVal.first][addVal.second] = addVal.third
+            } else {
+                difficultyScore = solver.difficultyScore()
             }
         }
 
@@ -95,7 +96,7 @@ class SudokuLogic() {
                 notes = notes
             ))
         } else {
-            for (field in SudokuUtil.getRelevantValues(fields, currFieldCoords!!.first, currFieldCoords!!.second)) { //TODO auch currField gehoert zu relevant Values
+            for (field in SudokuUtil.getRelevantValues(fields, currFieldCoords!!.first, currFieldCoords!!.second)) {
                 val newNotes = field.value!!.notes.clone()
                 newNotes[s.toInt() - 1] = null
                 field.postValue(
@@ -148,6 +149,38 @@ class SudokuLogic() {
             }
         }
         return true
+    }
+
+    private fun prepareSudoku(sudoku: Array<Array<String?>>, backup: ArrayDeque<Triple<Int, Int, String?>>, initialNumbsTaken: Int = 30) {
+        solution = Array(9) { arrayOfNulls(9) }
+        makeSolution()
+
+        backup.clear()
+        for (i in 0..8) {
+            for (j in 0..8) {
+                sudoku[i][j] = solution[i][j]
+            }
+        }
+
+        var numbsTaken = initialNumbsTaken
+        do {
+            removeRandomNum(sudoku, backup)
+            numbsTaken--
+        } while(numbsTaken > 0)
+    }
+
+    private fun removeRandomNum(sudoku: Array<Array<String?>>, backup: ArrayDeque<Triple<Int, Int, String?>>) {
+        if (!sudoku.any { row -> row.any { it != null } }) throw NoSuchElementException()
+
+        while (true) {
+            val row = Random.nextInt(0..8)
+            val col = Random.nextInt(0..8)
+
+            if (sudoku[row][col] == null) continue
+            backup.addLast(Triple(row, col, sudoku[row][col]))
+            sudoku[row][col] = null
+            return
+        }
     }
 
     internal fun makeSolution(): Boolean {
@@ -240,7 +273,10 @@ data class SudokuField(
 }
 
 enum class Difficulty {
+    BEGINNER,
     EASY,
     MEDIUM,
-    HARD
+    HARD,
+    EVIL,
+    DIABOLICAL
 }
