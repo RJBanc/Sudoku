@@ -5,7 +5,7 @@ import kotlin.random.Random
 import kotlin.random.nextInt
 
 class SudokuLogic() {
-    private var difficulty: Difficulty = Difficulty.EASY
+    private var difficulty: Difficulty = Difficulty.DIABOLICAL
     private val fields: Array<Array<MutableLiveData<SudokuField>>>
     private var solution: Array<Array<String?>>
     private val symbols = arrayOf("1", "2", "3", "4", "5", "6", "7", "8", "9")
@@ -43,18 +43,19 @@ class SudokuLogic() {
 
         prepareSudoku(sudoku, backup)
 
-        var difficultyScore = 0
+        var difficultyScore = difficultyRange[this.difficulty]!!.first
         var attempts = 30
-        while (difficultyScore !in difficultyRange[this.difficulty]!!) {
-            if (difficultyScore < difficultyRange[this.difficulty]!!.first)
-                removeRandomNum(sudoku, backup)
-            else if (difficultyScore > difficultyRange[this.difficulty]!!.last) {
+        do {
+            if (difficultyScore > difficultyRange[this.difficulty]!!.last) {
                 val addVal = backup.removeLast()
                 sudoku[addVal.first][addVal.second] = addVal.third
             }
+            else if (difficultyScore < difficultyRange[this.difficulty]!!.first)
+                removeRandomNum(sudoku, backup)
+
 
             val solver = SudokuSolver(sudoku.copy())
-            if (!solver.solve()) {
+            if (!solver.solve() || checkNumSolutions(sudoku.copy()) != 1) {
                 if (attempts-- == 0) {
                     attempts = 30
                     prepareSudoku(sudoku, backup)
@@ -62,10 +63,10 @@ class SudokuLogic() {
                 }
                 val addVal = backup.removeLast()
                 sudoku[addVal.first][addVal.second] = addVal.third
-            } else {
+            } else if (solver.finished()) {
                 difficultyScore = solver.difficultyScore()
             }
-        }
+        } while (difficultyScore !in difficultyRange[this.difficulty]!!)
 
         for (i in 0..8) {
             for (j in 0..8) {
