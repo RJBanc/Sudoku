@@ -50,6 +50,29 @@ class MainActivity : ComponentActivity() {
 fun KeepScreenOn() = AndroidView({ View(it).apply { keepScreenOn = true } })
 
 @Composable
+fun GameInfo(
+    modifier: Modifier = Modifier,
+    sudokuGame: SudokuLogic
+) {
+    Row (
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(start = 15.dp),
+        horizontalArrangement = Arrangement.Start
+    ) {
+        Button(
+            onClick = { sudokuGame.newGame() }
+        ) {
+            Icon(
+                Icons.Filled.Refresh,
+                contentDescription = "New Game",
+                modifier = Modifier.size(ButtonDefaults.IconSize)
+            )
+        }
+    }
+}
+
+@Composable
 fun Grid(modifier: Modifier = Modifier
 ){
     Canvas(modifier = modifier.size(360.dp)) {
@@ -171,6 +194,103 @@ fun SudokuButton(
         }
     }
 }
+@Composable
+fun SudokuBox(
+    modifier: Modifier = Modifier,
+    sudokuGame: SudokuLogic,
+    showHints: Boolean
+) {
+    Box()
+    {
+        Row(
+            modifier = modifier
+        ){
+            for (i in 0..8){
+                Column(
+                    modifier = modifier,
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    for (j in 0..8){
+                        SudokuButton(
+                            fieldData = sudokuGame.getField(row = i, col = j),
+                            sudokuGame = sudokuGame,
+                            row = i,
+                            col = j,
+                            showHint = showHints
+                        )
+                    }
+                }
+            }
+        }
+        Grid()
+    }
+}
+
+@Composable
+fun AssistBar(
+    modifier: Modifier = Modifier,
+    takeNotes: Boolean,
+    showHints: Boolean,
+    noteCallback: (Boolean) -> Unit,
+    hintCallback: (Boolean) -> Unit
+) {
+    Row (
+        modifier = Modifier,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+
+        Text("Show Mistakes")
+        Switch(
+            modifier = Modifier,
+            checked = showHints,
+            onCheckedChange = hintCallback
+        )
+        Spacer(modifier = modifier.width(100.dp))
+        Text("Notes")
+        Switch(
+            modifier = Modifier,
+            checked = takeNotes,
+            onCheckedChange = noteCallback
+        )
+    }
+}
+
+@Composable
+fun NumPad(
+    modifier: Modifier = Modifier,
+    takeNotes: Boolean,
+    sudokuGame: SudokuLogic
+) {
+    for (i in 0..2) {
+        Row(
+            modifier = modifier,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            for (j in 0..2) {
+                Column(
+                    modifier = modifier,
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Button(
+                        modifier= modifier
+                            .height(60.dp)
+                            .width(60.dp),
+                        onClick = {
+                            sudokuGame.setFieldNumber((i * 3 + j + 1).toString(), takeNotes)
+                        }
+                    ) {
+                        Text(
+                            text = (i * 3 + j + 1).toString(),
+                            fontSize = 30.sp
+                        )
+                    }
+                }
+                Spacer(modifier = modifier.width(10.dp))
+            }
+        }
+        Spacer(modifier = modifier.height(10.dp))
+    }
+}
 
 @Composable
 fun Game(
@@ -188,87 +308,17 @@ fun Game(
             .wrapContentSize(Alignment.Center),
         horizontalAlignment = Alignment.CenterHorizontally
     ){
-        Row (
-            modifier = Modifier.fillMaxWidth()
-                .padding(start = 15.dp),
-            horizontalArrangement = Arrangement.Start
-        ) {
-            Button(
-                onClick = { sudokuGame.newGame() }
-            ) {
-                Icon(
-                    Icons.Filled.Refresh,
-                    contentDescription = "New Game",
-                    modifier = Modifier.size(ButtonDefaults.IconSize)
-                )
-            }
-        }
-        Box()
-        {
-            Row(
-                modifier = modifier
-            ){
-                for (i in 0..8){
-                    Column(
-                        modifier = modifier,
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        for (j in 0..8){
-                            SudokuButton(
-                                fieldData = sudokuGame.getField(row = i, col = j),
-                                sudokuGame = sudokuGame,
-                                row = i,
-                                col = j,
-                                showHint = showHints
-                            )
-                        }
-                    }
-                }
-            }
-            Grid()
-        }
+        GameInfo(modifier = modifier, sudokuGame = sudokuGame)
+        SudokuBox(modifier = modifier, sudokuGame = sudokuGame, showHints = showHints)
         Spacer(modifier = modifier.height(32.dp))
-        Row (
-            modifier = Modifier,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-
-            Text("Show Hints")
-            Switch(
-                modifier = Modifier,
-                checked = showHints,
-                onCheckedChange = {
-                    showHints = it
-                }
-            )
-            Spacer(modifier = modifier.width(100.dp))
-            Text("Notes")
-            Switch(
-                modifier = Modifier,
-                checked = takeNotes,
-                onCheckedChange = {
-                    takeNotes = it
-                }
-            )
-        }
+        AssistBar(modifier = modifier,
+            takeNotes = takeNotes,
+            showHints = showHints,
+            noteCallback = { takeNotes = it },
+            hintCallback = { showHints = it }
+        )
         Spacer(modifier = modifier.height(32.dp))
-        Row(
-            modifier = Modifier,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            for (i in 1..9) {
-                Button(
-                    modifier= modifier
-                        .height(40.dp)
-                        .width(40.dp),
-                    onClick = {
-                        sudokuGame.setFieldNumber(i.toString(), takeNotes)
-                    }
-                ) {
-                    Text(i.toString())
-                }
-            }
-        }
+        NumPad(modifier = modifier, takeNotes = takeNotes, sudokuGame = sudokuGame)
     }
 
 
