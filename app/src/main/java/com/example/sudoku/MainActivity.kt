@@ -127,6 +127,16 @@ fun SudokuButton(
     showHint: Boolean
 ) {
     val sudokuField by fieldData.observeAsState()
+
+    val highlightedColor = Color(0x7040FF99)
+    val selectedColor = Color(0xFF40FF99)
+
+    var buttonColor = Color.White
+    if (sudokuField!!.isSelected)
+        buttonColor = selectedColor
+    else if (sudokuField!!.isHighlighted)
+        buttonColor = highlightedColor
+
     Button (
         modifier = modifier
             .height(40.dp)
@@ -143,9 +153,9 @@ fun SudokuButton(
             )
         },
         colors = buttonColors(
-            backgroundColor = if (sudokuField!!.isHighlighted) Color.Cyan else Color.White,
+            backgroundColor = buttonColor,
             contentColor = Color.Black,
-            disabledBackgroundColor = if (sudokuField!!.isHighlighted) Color.Cyan else Color.White,
+            disabledBackgroundColor = buttonColor,
             disabledContentColor = Color.Black
         ),
         enabled = sudokuField!!.isEnabled,
@@ -199,13 +209,13 @@ fun SudokuBox(
 ) {
     Box()
     {
-        Row(
-            modifier = modifier
+        Column(
+            modifier = modifier,
+            horizontalAlignment = Alignment.CenterHorizontally
         ){
             for (i in 0..8){
-                Column(
-                    modifier = modifier,
-                    horizontalAlignment = Alignment.CenterHorizontally
+                Row(
+                    modifier = modifier
                 ) {
                     for (j in 0..8){
                         SudokuButton(

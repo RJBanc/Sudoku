@@ -4,7 +4,7 @@ import androidx.lifecycle.MutableLiveData
 import kotlin.random.Random
 import kotlin.random.nextInt
 
-class SudokuLogic() {
+class SudokuLogic {
     private var difficulty: Difficulty = Difficulty.DIABOLICAL
     private val fields: Array<Array<MutableLiveData<SudokuField>>>
     private var solution: Array<Array<String?>>
@@ -18,12 +18,13 @@ class SudokuLogic() {
                 MutableLiveData<SudokuField>(
                     SudokuField(
                         isEnabled = true,
-                        isHighlighted = false
+                        isHighlighted = false,
+                        isSelected = false
                     )
                 )
             }
         }
-        solution = Array(9) { arrayOfNulls<String>(9) }
+        solution = Array(9) { arrayOfNulls(9) }
     }
 
     fun newGame(difficulty: Difficulty = this.difficulty) {
@@ -78,13 +79,11 @@ class SudokuLogic() {
 
         for (i in 0..8) {
             for (j in 0..8) {
-                fields[i][j].postValue(
-                    fields[i][j].value!!.copy(
-                        isEnabled = sudoku[i][j] == null,
-                        notes = fields[i][j].value!!.notes.clone(),
-                        number = sudoku[i][j],
-                        solution = solution[i][j]
-                    )
+                fields[i][j].value = fields[i][j].value!!.copy(
+                    isEnabled = sudoku[i][j] == null,
+                    notes = fields[i][j].value!!.notes.clone(),
+                    number = sudoku[i][j],
+                    solution = solution[i][j]
                 )
             }
         }
@@ -101,26 +100,24 @@ class SudokuLogic() {
         if (isNote) {
             val notes = currField.value!!.notes.clone()
             notes[s.toInt() - 1] = if(notes[s.toInt() - 1] == null) s else null
-            currField.postValue(currField.value!!.copy(
+            currField.value = currField.value!!.copy(
                 notes = notes
-            ))
+            )
         } else {
             for (field in SudokuUtil.getRelevantValues(fields, currFieldCoords!!.first, currFieldCoords!!.second)) {
                 val newNotes = field.value!!.notes.clone()
                 newNotes[s.toInt() - 1] = null
-                field.postValue(
-                    field.value!!.copy(
-                        notes = newNotes
-                    )
+                field.value = field.value!!.copy(
+                    notes = newNotes
                 )
             }
             val newNotes = currField.value!!.notes.clone()
             newNotes[s.toInt() - 1] = null
-            currField.postValue(
+            currField.value =
                 currField.value!!.copy(
                     number = if(currField.value!!.number != s) s else null,
                     notes = newNotes
-                )
+
             )
         }
     }
@@ -132,19 +129,29 @@ class SudokuLogic() {
 
         if (lastHighlighted != null) {
             for (field in lastHighlighted!!) {
-                field.postValue(field.value!!.copy(
+                field.value = field.value!!.copy(
                     isHighlighted = false,
+                    isSelected = false,
                     notes = field.value!!.notes.clone()
-                ))
+                )
             }
         }
 
+
+
         for (field in toBeHighlighted) {
-            field.postValue(field.value!!.copy(
+            field.value = field.value!!.copy(
                 isHighlighted = true,
+                isSelected = false,
                 notes = field.value!!.notes.clone()
-            ))
+            )
         }
+
+        fields[row][col].value = fields[row][col].value!!.copy(
+            isHighlighted = false,
+            isSelected = true,
+            notes = fields[row][col].value!!.notes.clone()
+        )
 
         lastHighlighted = toBeHighlighted
     }
@@ -252,6 +259,7 @@ class SudokuLogic() {
 data class SudokuField(
     val isEnabled: Boolean,
     val isHighlighted: Boolean,
+    val isSelected: Boolean,
     val solution: String? = null,
     val number: String? = null,
     val notes: Array<String?> = arrayOfNulls(9)
@@ -264,6 +272,7 @@ data class SudokuField(
 
         if (isEnabled != other.isEnabled) return false
         if (isHighlighted != other.isHighlighted) return false
+        if (isSelected != other.isHighlighted) return false
         if (solution != other.solution) return false
         if (number != other.number) return false
         if (!notes.contentEquals(other.notes)) return false
@@ -274,6 +283,7 @@ data class SudokuField(
     override fun hashCode(): Int {
         var result = isEnabled.hashCode()
         result = 31 * result + isHighlighted.hashCode()
+        result = 31 * result + isSelected.hashCode()
         result = 31 * result + (solution?.hashCode() ?: 0)
         result = 31 * result + (number?.hashCode() ?: 0)
         result = 31 * result + notes.contentHashCode()
