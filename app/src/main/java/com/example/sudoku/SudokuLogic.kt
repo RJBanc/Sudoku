@@ -43,30 +43,38 @@ class SudokuLogic() {
 
         prepareSudoku(sudoku, backup)
 
-        var difficultyScore = difficultyRange[this.difficulty]!!.first
-        var attempts = 30
-        do {
-            if (difficultyScore > difficultyRange[this.difficulty]!!.last) {
-                val addVal = backup.removeLast()
-                sudoku[addVal.first][addVal.second] = addVal.third
-            }
-            else if (difficultyScore < difficultyRange[this.difficulty]!!.first)
-                removeRandomNum(sudoku, backup)
+        while (true) {
+            var difficultyScore = difficultyRange[this.difficulty]!!.first
+            var attempts = 5
+            do {
+                if (difficultyScore > difficultyRange[this.difficulty]!!.last) {
+                    val addVal = backup.removeLast()
+                    sudoku[addVal.first][addVal.second] = addVal.third
+                } else if (difficultyScore < difficultyRange[this.difficulty]!!.first)
+                    removeRandomNum(sudoku, backup)
 
 
-            val solver = SudokuSolver(sudoku.copy())
-            if (!solver.solve() || checkNumSolutions(sudoku.copy()) != 1) {
-                if (attempts-- == 0) {
-                    attempts = 30
-                    prepareSudoku(sudoku, backup)
-                    continue
+                val solver = SudokuSolver(sudoku.copy())
+                if (!solver.solve()) {
+                    if (attempts-- == 0) {
+                        attempts = 5
+                        difficultyScore = difficultyRange[this.difficulty]!!.first
+                        prepareSudoku(sudoku, backup)
+                        continue
+                    }
+                    val addVal = backup.removeLast()
+                    sudoku[addVal.first][addVal.second] = addVal.third
+                } else if (solver.finished()) {
+                    difficultyScore = solver.difficultyScore()
                 }
+            } while (difficultyScore !in difficultyRange[this.difficulty]!!)
+
+            if (checkNumSolutions(sudoku.copy()) == 1) break
+            do {
                 val addVal = backup.removeLast()
                 sudoku[addVal.first][addVal.second] = addVal.third
-            } else if (solver.finished()) {
-                difficultyScore = solver.difficultyScore()
-            }
-        } while (difficultyScore !in difficultyRange[this.difficulty]!!)
+            } while (checkNumSolutions(sudoku.copy()) != 1)
+        }
 
         for (i in 0..8) {
             for (j in 0..8) {
