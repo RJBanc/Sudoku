@@ -1,7 +1,7 @@
 package com.example.sudoku
 
 import android.os.Bundle
-import android.view.View
+import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.Canvas
@@ -22,7 +22,6 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import com.example.sudoku.ui.theme.SudokuTheme
@@ -43,11 +42,9 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+        window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
     }
 }
-
-@Composable
-fun KeepScreenOn() = AndroidView({ View(it).apply { keepScreenOn = true } })
 
 @Composable
 fun GameInfo(
@@ -299,8 +296,6 @@ fun Game(
 ) {
     var showHints by remember { mutableStateOf(false) }
     var takeNotes by remember { mutableStateOf(false) }
-
-    KeepScreenOn()
 
     Column(
         modifier = modifier
