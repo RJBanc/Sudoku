@@ -1,10 +1,10 @@
 package com.example.sudoku
 
 import android.os.Bundle
-import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.GenericShape
 import androidx.compose.material.*
@@ -19,9 +19,11 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import com.example.sudoku.ui.theme.SudokuTheme
@@ -32,6 +34,9 @@ class MainActivity : ComponentActivity() {
         setContent {
             SudokuTheme {
                 // A surface container using the 'background' color from the theme
+                this.window.statusBarColor = MaterialTheme.colors.background.toArgb()
+                WindowInsetsControllerCompat(window, window.decorView)
+                    .isAppearanceLightStatusBars = !isSystemInDarkTheme()
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colors.background
@@ -42,7 +47,6 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
-        window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
     }
 }
 
@@ -70,13 +74,14 @@ fun GameInfo(
 }
 
 @Composable
-fun Grid(modifier: Modifier = Modifier
+fun Grid(
+    modifier: Modifier = Modifier,
+    borderColor: Color = MaterialTheme.colors.onBackground,
+    cellColor: Color = MaterialTheme.colors.onSurface
 ){
     Canvas(modifier = modifier.size(360.dp)) {
         val borderDrawWidth = 5f
-        val borderColor = Color.Black
         val cellDrawWidth = 2f
-        val cellColor = Color.Gray
 
         for (i in 1..8) {
             drawLine(
@@ -128,14 +133,19 @@ fun SudokuButton(
 ) {
     val sudokuField by fieldData.observeAsState()
 
-    val highlightedColor = Color(0x7040FF99)
-    val selectedColor = Color(0xFF40FF99)
+    val highlightedColor = MaterialTheme.colors.primary
+    val selectedColor = MaterialTheme.colors.primaryVariant
 
-    var buttonColor = Color.White
+    var buttonColor = MaterialTheme.colors.surface
     if (sudokuField!!.isSelected)
         buttonColor = selectedColor
     else if (sudokuField!!.isHighlighted)
         buttonColor = highlightedColor
+
+    val contentColor = if (sudokuField!!.isSelected || sudokuField!!.isHighlighted)
+        MaterialTheme.colors.onPrimary
+    else
+        MaterialTheme.colors.onSurface
 
     Button (
         modifier = modifier
@@ -154,9 +164,7 @@ fun SudokuButton(
         },
         colors = buttonColors(
             backgroundColor = buttonColor,
-            contentColor = Color.Black,
             disabledBackgroundColor = buttonColor,
-            disabledContentColor = Color.Black
         ),
         enabled = sudokuField!!.isEnabled,
         onClick = {
@@ -168,7 +176,7 @@ fun SudokuButton(
                 Text(
                     text = sudokuField!!.number ?: "",
                     color = if(sudokuField!!.solution == (sudokuField!!.number ?: "") || !showHint)
-                        Color.Black
+                        contentColor
                     else
                         Color.Red
                 )
@@ -190,7 +198,8 @@ fun SudokuButton(
                                 ) {
                                     Text(
                                         text = sudokuField!!.notes[i * 3 + j] ?: "",
-                                        fontSize = 6.sp
+                                        fontSize = 6.sp,
+                                        color = contentColor
                                     )
                                 }
                             }
