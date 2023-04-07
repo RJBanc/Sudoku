@@ -97,6 +97,7 @@ class SudokuLogic {
     fun setFieldNumber(s: String, isNote: Boolean) {
         if (currFieldCoords == null) return
         val currField = fields[currFieldCoords!!.first][currFieldCoords!!.second]
+        if (!currField.value!!.isEnabled) return
 
         if (isNote) {
             val notes = currField.value!!.notes.clone()
@@ -126,7 +127,7 @@ class SudokuLogic {
     fun fieldSelected(row: Int, col: Int) {
         currFieldCoords = Pair(row, col)
 
-        val toBeHighlighted = SudokuUtil.getRelevantValues(fields, row, col)
+        val toBeHighlighted = SudokuUtil.getRelevantValues(fields, row, col).toMutableList()
 
         if (lastHighlighted != null) {
             for (field in lastHighlighted!!) {
@@ -138,7 +139,21 @@ class SudokuLogic {
             }
         }
 
-
+        if (fields[row][col].value!!.number != null) {
+            for (i in 0..8) {
+                for (j in 0..8) {
+                    if (fields[i][j].value!!.number == fields[row][col].value!!.number &&
+                            fields[i][j] !in toBeHighlighted) {
+                        fields[i][j].value = fields[i][j].value!!.copy(
+                            isHighlighted = true,
+                            isSelected = false,
+                            notes = fields[i][j].value!!.notes.clone()
+                        )
+                        toBeHighlighted.add(fields[i][j])
+                    }
+                }
+            }
+        }
 
         for (field in toBeHighlighted) {
             field.value = field.value!!.copy(
@@ -154,7 +169,7 @@ class SudokuLogic {
             notes = fields[row][col].value!!.notes.clone()
         )
 
-        lastHighlighted = toBeHighlighted
+        lastHighlighted = toBeHighlighted.toTypedArray()
     }
 
     private fun Array<Array<String?>>.copy() = Array(size) { get(it).clone() }

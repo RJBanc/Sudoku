@@ -27,6 +27,8 @@ import androidx.compose.ui.unit.sp
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
+import com.example.sudoku.ui.theme.Mint200
+import com.example.sudoku.ui.theme.Mint700
 import com.example.sudoku.ui.theme.SudokuTheme
 
 class MainActivity : ComponentActivity() {
@@ -239,10 +241,19 @@ fun SudokuButton(
     else if (sudokuField!!.isHighlighted)
         buttonColor = highlightedColor
 
-    val contentColor = if (sudokuField!!.isSelected || sudokuField!!.isHighlighted)
-        MaterialTheme.colors.onPrimary
-    else
-        MaterialTheme.colors.onSurface
+    val contentColor = if (sudokuField!!.isSelected || sudokuField!!.isHighlighted) {
+        if (sudokuField!!.isEnabled)
+            Mint700
+        else
+            MaterialTheme.colors.onPrimary
+    }
+    else {
+        if (sudokuField!!.isEnabled)
+            Mint200
+        else
+            MaterialTheme.colors.onSurface
+    }
+
 
     Button (
         modifier = modifier
@@ -263,7 +274,7 @@ fun SudokuButton(
             backgroundColor = buttonColor,
             disabledBackgroundColor = buttonColor,
         ),
-        enabled = sudokuField!!.isEnabled,
+        enabled = true,
         onClick = {
             sudokuGame.fieldSelected(row, col)
         }
@@ -480,7 +491,15 @@ fun TestingStuff(s: MutableLiveData<Dc>, modifier: Modifier = Modifier)
 fun DefaultPreview() {
     SudokuTheme {
         val sudoku = SudokuLogic()
+
+        sudoku.fieldSelected(2, 6)
+        sudoku.setFieldNumber("2", false)
+        sudoku.fieldSelected(2, 5)
+        sudoku.setFieldNumber("2", false)
+        sudoku.fieldSelected(3, 5)
+        sudoku.setFieldNumber("2", false)
+
         Game(sudokuGame = sudoku)
-        sudoku.newGame()
+        //sudoku.newGame()
     }
 }
