@@ -5,7 +5,7 @@ import kotlin.random.Random
 import kotlin.random.nextInt
 
 class SudokuLogic {
-    private var difficulty: Difficulty = Difficulty.DIABOLICAL
+    var difficulty: Difficulty = Difficulty.EASY
     private val fields: Array<Array<MutableLiveData<SudokuField>>>
     private var solution: Array<Array<String?>>
     private val symbols = arrayOf("1", "2", "3", "4", "5", "6", "7", "8", "9")
@@ -41,8 +41,9 @@ class SudokuLogic {
 
         val sudoku = Array(9) { arrayOfNulls<String>(9) }
         val backup = ArrayDeque<Triple<Int, Int, String?>>()
+        val initialNumbsTaken = 40
 
-        prepareSudoku(sudoku, backup)
+        prepareSudoku(sudoku, backup, initialNumbsTaken)
 
         while (true) {
             var difficultyScore = difficultyRange[this.difficulty]!!.first
@@ -60,7 +61,7 @@ class SudokuLogic {
                     if (attempts-- == 0) {
                         attempts = 5
                         difficultyScore = difficultyRange[this.difficulty]!!.first
-                        prepareSudoku(sudoku, backup)
+                        prepareSudoku(sudoku, backup, initialNumbsTaken)
                         continue
                     }
                     val addVal = backup.removeLast()

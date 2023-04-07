@@ -1,6 +1,7 @@
 package com.example.sudoku
 
 import android.os.Bundle
+import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.Canvas
@@ -47,21 +48,67 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+        window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
     }
 }
 
+@Composable
+fun NewGameConfirmation(
+    modifier: Modifier = Modifier,
+    confirm: (Boolean) -> Unit
+) {
+    AlertDialog(
+        modifier = modifier,
+        onDismissRequest = { confirm(false) },
+        title = { Text("New Game") },
+        text = { Text("Do you want to start a new game?") },
+        confirmButton = {
+            Button(
+                modifier = modifier,
+                onClick = { confirm(true) }
+            ) {
+                Text("Start New Game!")
+            }
+        },
+        dismissButton = {
+            Button(
+                modifier = modifier,
+                onClick = { confirm(false) }
+            ) {
+                Text("Cancel")
+            }
+
+        }
+    )
+}
+
+@OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun GameInfo(
     modifier: Modifier = Modifier,
     sudokuGame: SudokuLogic
 ) {
+    val difficulty = mapOf(
+        Difficulty.BEGINNER to "Beginner",
+        Difficulty.EASY to "Easy",
+        Difficulty.MEDIUM to "Medium",
+        Difficulty.HARD to "Hard",
+        Difficulty.EVIL to "Evil",
+        Difficulty.DIABOLICAL to "Diabolical"
+    )
+    var expanded by remember { mutableStateOf(false) }
+    var selectedDifficulty by remember { mutableStateOf(sudokuGame.difficulty) }
+
+    var showConfirm by remember { mutableStateOf(false) }
+
     Row (
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(start = 15.dp),
+        modifier = modifier
+            .height(55.dp),
+        verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.Start
     ) {
         Button(
+            modifier = modifier.fillMaxHeight(),
             onClick = { sudokuGame.newGame() }
         ) {
             Icon(
@@ -70,7 +117,57 @@ fun GameInfo(
                 modifier = Modifier.size(ButtonDefaults.IconSize)
             )
         }
+        Spacer(modifier = modifier.width(10.dp))
+        Box(
+            modifier = modifier
+        ) {
+            ExposedDropdownMenuBox(
+                expanded = expanded,
+                onExpandedChange = {
+                    expanded = !expanded
+                }
+            ) {
+                TextField(
+                    value = difficulty[selectedDifficulty]!!,
+                    onValueChange = {},
+                    readOnly = true,
+                    trailingIcon = {
+                        ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
+                    }
+                )
+
+                ExposedDropdownMenu(
+                    expanded = expanded,
+                    onDismissRequest = { expanded = false }
+                ) {
+                    difficulty.forEach { item ->
+                        DropdownMenuItem(
+                            onClick = {
+                                if (item.key != selectedDifficulty) {
+                                    showConfirm = true
+                                }
+                                selectedDifficulty = item.key
+                                expanded = false
+                            }
+                        ) {
+                            Text(text = item.value)
+                        }
+                    }
+                }
+            }
+        }
     }
+    if (showConfirm)
+        NewGameConfirmation(
+            modifier = modifier,
+            confirm = {
+                if (it)
+                    sudokuGame.newGame(selectedDifficulty)
+                else
+                    selectedDifficulty = sudokuGame.difficulty
+                showConfirm = false
+            }
+        )
 }
 
 @Composable
@@ -323,15 +420,16 @@ fun Game(
         horizontalAlignment = Alignment.CenterHorizontally
     ){
         GameInfo(modifier = modifier, sudokuGame = sudokuGame)
+        Spacer(modifier = modifier.height(10.dp))
         SudokuBox(modifier = modifier, sudokuGame = sudokuGame, showHints = showHints)
-        Spacer(modifier = modifier.height(32.dp))
+        Spacer(modifier = modifier.height(10.dp))
         AssistBar(modifier = modifier,
             takeNotes = takeNotes,
             showHints = showHints,
             noteCallback = { takeNotes = it },
             hintCallback = { showHints = it }
         )
-        Spacer(modifier = modifier.height(32.dp))
+        Spacer(modifier = modifier.height(10.dp))
         NumPad(modifier = modifier, takeNotes = takeNotes, sudokuGame = sudokuGame)
     }
 
