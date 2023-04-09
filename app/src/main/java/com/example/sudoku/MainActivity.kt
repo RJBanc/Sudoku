@@ -305,7 +305,11 @@ fun SudokuButton(
                                     )
                                 ) {
                                     Text(
-                                        text = sudokuField!!.notes[i * 3 + j] ?: "",
+                                        text =
+                                        if (sudokuField!!.notes and 1 shl (i * 3 + j) > 0)
+                                            (i * 3 + j + 1).toString()
+                                        else
+                                            "",
                                         fontSize = 6.sp,
                                         color = contentColor
                                     )
