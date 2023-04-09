@@ -21,12 +21,12 @@ import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
 import com.example.sudoku.ui.theme.Mint200
 import com.example.sudoku.ui.theme.Mint700
 import com.example.sudoku.ui.theme.SudokuTheme
@@ -116,7 +116,6 @@ fun GameInfo(
             Icon(
                 Icons.Filled.Refresh,
                 contentDescription = "New Game",
-                modifier = Modifier.size(ButtonDefaults.IconSize)
             )
         }
         Spacer(modifier = modifier.width(10.dp))
@@ -306,7 +305,7 @@ fun SudokuButton(
                                 ) {
                                     Text(
                                         text =
-                                        if (sudokuField!!.notes and 1 shl (i * 3 + j) > 0)
+                                        if (sudokuField!!.notes and (1 shl (i * 3 + j)) > 0)
                                             (i * 3 + j + 1).toString()
                                         else
                                             "",
@@ -359,27 +358,78 @@ fun AssistBar(
     modifier: Modifier = Modifier,
     takeNotes: Boolean,
     showHints: Boolean,
-    noteCallback: (Boolean) -> Unit,
-    hintCallback: (Boolean) -> Unit
+    noteCallback: () -> Unit,
+    hintCallback: () -> Unit,
+    undoCallback: () -> Unit
 ) {
     Row (
-        modifier = Modifier,
-        verticalAlignment = Alignment.CenterVertically
+        modifier = modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.Center
     ) {
-
-        Text("Show Mistakes")
-        Switch(
-            modifier = Modifier,
-            checked = showHints,
-            onCheckedChange = hintCallback
-        )
-        Spacer(modifier = modifier.width(100.dp))
-        Text("Notes")
-        Switch(
-            modifier = Modifier,
-            checked = takeNotes,
-            onCheckedChange = noteCallback
-        )
+        Column (
+            modifier = modifier.weight(1f),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Button(
+                modifier = Modifier.width(60.dp),
+                onClick = hintCallback,
+                colors = buttonColors(
+                    backgroundColor = if (showHints)
+                        MaterialTheme.colors.primaryVariant
+                    else
+                        MaterialTheme.colors.primary
+                )
+            ) {
+                Icon(
+                    painterResource(id = R.drawable.done_all_48px),
+                    contentDescription = "Show Mistakes",
+                    modifier = modifier,
+                )
+            }
+            Text("Show Mistakes", Modifier)
+        }
+        Column(
+            modifier = modifier.weight(1f),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Button (
+                modifier = Modifier.width(60.dp),
+                onClick = undoCallback
+            ) {
+                Icon(
+                    painterResource(id = R.drawable.undo_48px),
+                    contentDescription = "Undo",
+                    modifier = modifier,
+                )
+            }
+            Text("Undo", Modifier)
+        }
+        Column(
+            modifier = modifier.weight(1f),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Button(
+                modifier = Modifier.width(60.dp),
+                onClick = noteCallback,
+                colors = buttonColors(
+                    backgroundColor = if (takeNotes)
+                        MaterialTheme.colors.primaryVariant
+                    else
+                        MaterialTheme.colors.primary
+                )
+            ) {
+                Icon(
+                    painterResource(id = R.drawable.app_registration_48px),
+                    contentDescription = "Switch Notes",
+                    modifier = modifier,
+                )
+            }
+            Text(text = "Take Notes", modifier = Modifier)
+        }
     }
 }
 
@@ -391,27 +441,24 @@ fun NumPad(
 ) {
     for (i in 0..2) {
         Row(
-            modifier = modifier,
-            verticalAlignment = Alignment.CenterVertically
+            modifier = modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center
         ) {
+            Spacer(modifier = modifier.width(10.dp))
             for (j in 0..2) {
-                Column(
-                    modifier = modifier,
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Button(
-                        modifier= modifier
-                            .height(60.dp)
-                            .width(60.dp),
-                        onClick = {
-                            sudokuGame.setFieldNumber((i * 3 + j + 1).toString(), takeNotes)
-                        }
-                    ) {
-                        Text(
-                            text = (i * 3 + j + 1).toString(),
-                            fontSize = 30.sp
-                        )
+                Button(
+                    modifier= modifier
+                        .height(55.dp)
+                        .width(55.dp),
+                    onClick = {
+                        sudokuGame.setFieldNumber((i * 3 + j + 1).toString(), takeNotes)
                     }
+                ) {
+                    Text(
+                        text = (i * 3 + j + 1).toString(),
+                        fontSize = 25.sp
+                    )
                 }
                 Spacer(modifier = modifier.width(10.dp))
             }
@@ -432,7 +479,8 @@ fun Game(
         modifier = modifier
             .fillMaxSize()
             .wrapContentSize(Alignment.Center),
-        horizontalAlignment = Alignment.CenterHorizontally
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
     ){
         GameInfo(modifier = modifier, sudokuGame = sudokuGame)
         Spacer(modifier = modifier.height(10.dp))
@@ -441,52 +489,14 @@ fun Game(
         AssistBar(modifier = modifier,
             takeNotes = takeNotes,
             showHints = showHints,
-            noteCallback = { takeNotes = it },
-            hintCallback = { showHints = it }
+            noteCallback = { takeNotes = !takeNotes },
+            hintCallback = { showHints = !showHints },
+            undoCallback = { sudokuGame.undo() }
         )
         Spacer(modifier = modifier.height(10.dp))
         NumPad(modifier = modifier, takeNotes = takeNotes, sudokuGame = sudokuGame)
     }
 
-
-}
-
-class Something {
-    var t by mutableStateOf("Hello")
-}
-
-data class Dc(
-    val st: String
-)
-
-@Composable
-fun TestingStuff(s: MutableLiveData<Dc>, modifier: Modifier = Modifier)
-{
-    var fu by remember { mutableStateOf(SudokuLogic()) }
-    val f by s.observeAsState()
-    val m = arrayOfNulls<Int>(9)
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .wrapContentSize(Alignment.Center),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ){
-        Button(
-            modifier = modifier,
-            colors = buttonColors(
-                backgroundColor = Color.White,
-                contentColor = Color.Black,
-                disabledBackgroundColor = Color.White,
-                disabledContentColor = Color.Black
-            ),
-            onClick = {
-                //f.t = "World"
-                s.postValue(f!!.copy("World"))
-            }
-        ){
-            Text(f!!.st, color=Color.Red)
-        }
-    }
 
 }
 

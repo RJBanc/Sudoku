@@ -11,6 +11,7 @@ class SudokuLogic {
     private val symbols = arrayOf("1", "2", "3", "4", "5", "6", "7", "8", "9")
     private var lastHighlighted: Array<MutableLiveData<SudokuField>>? = null
     private var currFieldCoords: Pair<Int, Int>? = null
+    private val history: ArrayDeque<Triple<Pair<Int, Int>, String?, List<Int>>> = ArrayDeque()
 
     private val stringToBitMap = mapOf<String?, Int>(
         "1" to 0b1,
@@ -51,6 +52,7 @@ class SudokuLogic {
             Difficulty.DIABOLICAL to 11000..25000
         )
 
+        history.clear()
         val sudoku = Array(9) { arrayOfNulls<String>(9) }
         val backup = ArrayDeque<Triple<Int, Int, String?>>()
         val initialNumbsTaken = 40
@@ -109,6 +111,13 @@ class SudokuLogic {
         if (currFieldCoords == null) return
         val currField = fields[currFieldCoords!!.first][currFieldCoords!!.second]
         if (!currField.value!!.isEnabled) return
+
+        history.addLast(Triple(
+            Pair(currFieldCoords!!.first, currFieldCoords!!.second),
+            currField.value!!.number,
+            SudokuUtil.getRelevantValues(fields, currFieldCoords!!.first, currFieldCoords!!.second)
+                .map { it.value!!.notes }
+        ))
 
         if (isNote) {
             var notes = currField.value!!.notes
@@ -174,6 +183,21 @@ class SudokuLogic {
         )
 
         lastHighlighted = toBeHighlighted.toTypedArray()
+    }
+
+    fun undo() {
+        val lastMove = history.removeLastOrNull() ?: return
+
+        for ((i, field) in SudokuUtil.getRelevantValues(fields, lastMove.first.first, lastMove.first.second).withIndex()) {
+            field.value = field.value!!.copy(
+                notes = lastMove.third[i]
+            )
+        }
+
+        val field = fields[lastMove.first.first][lastMove.first.second]
+        field.value = field.value!!.copy(
+            number = lastMove.second
+        )
     }
 
     private fun Array<Array<String?>>.copy() = Array(size) { get(it).clone() }
