@@ -35,10 +35,11 @@ import java.io.FileNotFoundException
 
 class MainActivity : ComponentActivity() {
     val sudoku = SudokuLogic()
-    val backupManager = BackupManager(applicationContext, sudoku)
+    lateinit var backupManager: BackupManager
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        backupManager = BackupManager(this, sudoku)
         setContent {
             SudokuTheme {
                 // A surface container using the 'background' color from the theme
