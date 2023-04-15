@@ -1,11 +1,14 @@
 package com.example.sudoku
 
 import androidx.lifecycle.MutableLiveData
+import com.example.sudoku.data.backup.BackupGame
+import com.example.sudoku.data.backup.BackupHistory
 import kotlin.random.Random
 import kotlin.random.nextInt
 
 class SudokuLogic {
     var difficulty: Difficulty = Difficulty.EASY
+    var isRunning: Boolean = false
     private val fields: Array<Array<MutableLiveData<SudokuField>>>
     private var solution: Array<Array<String?>>
     private val symbols = arrayOf("1", "2", "3", "4", "5", "6", "7", "8", "9")
@@ -41,6 +44,7 @@ class SudokuLogic {
     }
 
     fun newGame(difficulty: Difficulty = this.difficulty) {
+        this.isRunning = true
         this.difficulty = difficulty
 
         val difficultyRange = mapOf(
@@ -198,6 +202,66 @@ class SudokuLogic {
         field.value = field.value!!.copy(
             number = lastMove.second
         )
+    }
+
+    fun createBackup(): BackupGame {
+        var puzzle = ""
+        val editable = mutableListOf<Boolean>()
+        val notes = mutableListOf<Int>()
+
+        for (i in fields.indices) {
+            for (j in fields[0].indices) {
+                val fieldVal = fields[i][j].value!!
+                notes.add(fieldVal.notes)
+                puzzle += fieldVal.number ?: "0"
+                editable.add(fieldVal.isEnabled)
+            }
+        }
+
+        return BackupGame(
+            difficulty = this.difficulty,
+            solution = this.solution.joinToString(separator = "") {
+                it.joinToString(separator = "")
+            },
+            puzzle = puzzle,
+            editable = editable.toList(),
+            notes = notes.toList(),
+            history = List(this.history.size) { BackupHistory(this.history[it]) }
+        )
+    }
+
+    fun restoreBackup(backup: BackupGame) {
+        this.difficulty = backup.difficulty
+        this.isRunning = true
+        lastHighlighted = null
+        currFieldCoords = null
+
+        this.solution = Array(9) { it ->
+            Array(9) { jt ->
+                val numb = backup.solution[it * 9 + jt].toString()
+                if (numb != "0") numb else null
+            }
+        }
+
+        this.history.clear()
+        for (entry in backup.history) this.history.addLast(entry.getHistory())
+
+        for (i in fields.indices) {
+            for (j in fields[0].indices) {
+                val listIndex = i * 9 + j
+                fields[i][j].value = fields[i][j].value!!.copy(
+                    isEnabled = backup.editable[listIndex],
+                    isHighlighted = false,
+                    isSelected = false,
+                    solution = backup.solution[listIndex].toString(),
+                    number = if (backup.puzzle[listIndex] != '0')
+                                backup.puzzle[listIndex].toString()
+                            else
+                                null,
+                    notes = backup.notes[listIndex]
+                )
+            }
+        }
     }
 
     private fun Array<Array<String?>>.copy() = Array(size) { get(it).clone() }

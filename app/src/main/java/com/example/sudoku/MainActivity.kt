@@ -27,11 +27,16 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.LiveData
+import com.example.sudoku.data.backup.BackupManager
 import com.example.sudoku.ui.theme.Mint200
 import com.example.sudoku.ui.theme.Mint700
 import com.example.sudoku.ui.theme.SudokuTheme
+import java.io.FileNotFoundException
 
 class MainActivity : ComponentActivity() {
+    val sudoku = SudokuLogic()
+    val backupManager = BackupManager(applicationContext, sudoku)
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
@@ -44,13 +49,28 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colors.background
                 ) {
-                    val sudoku = SudokuLogic()
                     Game(sudokuGame = sudoku)
-                    sudoku.newGame()
                 }
             }
         }
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+    }
+
+    override fun onResume() {
+        super.onResume()
+        if (!sudoku.isRunning)
+            try {
+                backupManager.restoreBackup()
+            } catch(e: FileNotFoundException) {
+                sudoku.newGame()
+            }
+    }
+
+    override fun onPause() {
+        super.onPause()
+        if (sudoku.isRunning) {
+            backupManager.createBackup()
+        }
     }
 }
 
