@@ -127,7 +127,7 @@ fun GameInfo(
     ) {
         Button(
             modifier = modifier.fillMaxHeight(),
-            onClick = { sudokuGame.newGame() }
+            onClick = { sudokuGame.startNewGame() }
         ) {
             Icon(
                 Icons.Filled.Refresh,
@@ -179,7 +179,7 @@ fun GameInfo(
             modifier = modifier,
             confirm = {
                 if (it)
-                    sudokuGame.newGame(selectedDifficulty)
+                    sudokuGame.startNewGame(selectedDifficulty)
                 else
                     selectedDifficulty = sudokuGame.difficulty
                 showConfirm = false

@@ -3,9 +3,13 @@ package com.example.sudoku
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.viewModelScope
 import com.example.sudoku.data.backup.BackupGame
 import com.example.sudoku.data.backup.BackupHistory
 import com.example.sudoku.data.backup.BackupManager
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.launch
 import java.io.FileNotFoundException
 import kotlin.random.Random
 import kotlin.random.nextInt
@@ -48,10 +52,18 @@ class SudokuViewModel(application: Application) : AndroidViewModel(application) 
     }
 
     fun startGame() {
-        try {
-            this.restoreBackup()
-        } catch(e: FileNotFoundException) {
-            this.newGame()
+        viewModelScope.launch(Dispatchers.Default) {
+            try {
+                restoreBackup()
+            } catch(e: FileNotFoundException) {
+                newGame()
+            }
+        }
+    }
+
+    fun startNewGame(difficulty: Difficulty = this.difficulty) {
+        viewModelScope.launch(Dispatchers.Default) {
+            newGame(difficulty)
         }
     }
 
@@ -109,15 +121,16 @@ class SudokuViewModel(application: Application) : AndroidViewModel(application) 
 
         for (i in 0..8) {
             for (j in 0..8) {
-                fields[i][j].value = fields[i][j].value!!.copy(
+                fields[i][j].postValue(fields[i][j].value!!.copy(
                     isEnabled = sudoku[i][j] == null,
                     number = sudoku[i][j],
                     solution = solution[i][j]
-                )
+                ))
             }
         }
 
-        this.isRunning = true
+        isRunning = true
+
     }
 
     fun getField(row: Int, col: Int): MutableLiveData<SudokuField> {
@@ -242,44 +255,48 @@ class SudokuViewModel(application: Application) : AndroidViewModel(application) 
             history = List(this.history.size) { BackupHistory(this.history[it]) }
         )
 
-        BackupManager(getApplication()).createBackup(backup)
+        viewModelScope.launch(Dispatchers.Default) {
+            BackupManager(getApplication()).createBackup(backup)
+        }
     }
 
-    fun restoreBackup() {
-        val backup = BackupManager(getApplication()).restoreBackup()
+    suspend fun restoreBackup() {
+        val backup =  viewModelScope.async {
+            BackupManager(getApplication()).restoreBackup()
+        }
 
-        this.difficulty = backup.difficulty
+        difficulty = backup.await().difficulty
         lastHighlighted = null
         currFieldCoords = null
 
-        this.solution = Array(9) { it ->
+        solution = Array(9) { it ->
             Array(9) { jt ->
-                val numb = backup.solution[it * 9 + jt].toString()
+                val numb = backup.await().solution[it * 9 + jt].toString()
                 if (numb != "0") numb else null
             }
         }
 
-        this.history.clear()
-        for (entry in backup.history) this.history.addLast(entry.getHistory())
+        history.clear()
+        for (entry in backup.await().history) history.addLast(entry.getHistory())
 
         for (i in fields.indices) {
             for (j in fields[0].indices) {
                 val listIndex = i * 9 + j
-                fields[i][j].value = fields[i][j].value!!.copy(
-                    isEnabled = backup.editable[listIndex],
+                fields[i][j].postValue(fields[i][j].value!!.copy(
+                    isEnabled = backup.await().editable[listIndex],
                     isHighlighted = false,
                     isSelected = false,
-                    solution = backup.solution[listIndex].toString(),
-                    number = if (backup.puzzle[listIndex] != '0')
-                                backup.puzzle[listIndex].toString()
-                            else
-                                null,
-                    notes = backup.notes[listIndex]
-                )
+                    solution = backup.await().solution[listIndex].toString(),
+                    number = if (backup.await().puzzle[listIndex] != '0')
+                        backup.await().puzzle[listIndex].toString()
+                    else
+                        null,
+                    notes = backup.await().notes[listIndex]
+                ))
             }
         }
 
-        this.isRunning = true
+        isRunning = true
     }
 
     private fun Array<Array<String?>>.copy() = Array(size) { get(it).clone() }

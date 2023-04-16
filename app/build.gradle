@@ -44,11 +44,15 @@ android {
     packagingOptions {
         resources {
             excludes += '/META-INF/{AL2.0,LGPL2.1}'
+            pickFirst 'META-INF/versions/9/previous-compilation-data.bin'
         }
     }
 }
 
 dependencies {
+    implementation "androidx.lifecycle:lifecycle-viewmodel-ktx:2.6.1"
+    implementation "androidx.lifecycle:lifecycle-extensions:2.2.0"
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.0-Beta'
     implementation 'org.jetbrains.kotlinx:kotlinx-serialization-protobuf:1.5.0'
     implementation "androidx.room:room-runtime:$room_version"
     ksp "androidx.room:room-compiler:$room_version"
