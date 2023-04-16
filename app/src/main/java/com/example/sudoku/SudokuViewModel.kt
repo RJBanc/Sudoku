@@ -1,12 +1,16 @@
 package com.example.sudoku
 
+import android.app.Application
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.MutableLiveData
 import com.example.sudoku.data.backup.BackupGame
 import com.example.sudoku.data.backup.BackupHistory
+import com.example.sudoku.data.backup.BackupManager
+import java.io.FileNotFoundException
 import kotlin.random.Random
 import kotlin.random.nextInt
 
-class SudokuLogic {
+class SudokuViewModel(application: Application) : AndroidViewModel(application) {
     var difficulty: Difficulty = Difficulty.EASY
     var isRunning: Boolean = false
     private val fields: Array<Array<MutableLiveData<SudokuField>>>
@@ -43,8 +47,15 @@ class SudokuLogic {
         solution = Array(9) { arrayOfNulls(9) }
     }
 
+    fun startGame() {
+        try {
+            this.restoreBackup()
+        } catch(e: FileNotFoundException) {
+            this.newGame()
+        }
+    }
+
     fun newGame(difficulty: Difficulty = this.difficulty) {
-        this.isRunning = true
         this.difficulty = difficulty
 
         val difficultyRange = mapOf(
@@ -105,6 +116,8 @@ class SudokuLogic {
                 )
             }
         }
+
+        this.isRunning = true
     }
 
     fun getField(row: Int, col: Int): MutableLiveData<SudokuField> {
@@ -204,7 +217,7 @@ class SudokuLogic {
         )
     }
 
-    fun createBackup(): BackupGame {
+    fun createBackup() {
         var puzzle = ""
         val editable = mutableListOf<Boolean>()
         val notes = mutableListOf<Int>()
@@ -218,7 +231,7 @@ class SudokuLogic {
             }
         }
 
-        return BackupGame(
+        val backup = BackupGame(
             difficulty = this.difficulty,
             solution = this.solution.joinToString(separator = "") {
                 it.joinToString(separator = "")
@@ -228,11 +241,14 @@ class SudokuLogic {
             notes = notes.toList(),
             history = List(this.history.size) { BackupHistory(this.history[it]) }
         )
+
+        BackupManager(getApplication()).createBackup(backup)
     }
 
-    fun restoreBackup(backup: BackupGame) {
+    fun restoreBackup() {
+        val backup = BackupManager(getApplication()).restoreBackup()
+
         this.difficulty = backup.difficulty
-        this.isRunning = true
         lastHighlighted = null
         currFieldCoords = null
 
@@ -262,6 +278,8 @@ class SudokuLogic {
                 )
             }
         }
+
+        this.isRunning = true
     }
 
     private fun Array<Array<String?>>.copy() = Array(size) { get(it).clone() }

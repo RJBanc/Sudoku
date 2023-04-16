@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.viewModels
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
@@ -22,24 +23,20 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.LiveData
-import com.example.sudoku.data.backup.BackupManager
 import com.example.sudoku.ui.theme.Mint200
 import com.example.sudoku.ui.theme.Mint700
 import com.example.sudoku.ui.theme.SudokuTheme
-import java.io.FileNotFoundException
 
 class MainActivity : ComponentActivity() {
-    val sudoku = SudokuLogic()
-    lateinit var backupManager: BackupManager
+    private val sudoku: SudokuViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        backupManager = BackupManager(this, sudoku)
+
         setContent {
             SudokuTheme {
                 // A surface container using the 'background' color from the theme
@@ -59,18 +56,16 @@ class MainActivity : ComponentActivity() {
 
     override fun onResume() {
         super.onResume()
+
         if (!sudoku.isRunning)
-            try {
-                backupManager.restoreBackup()
-            } catch(e: FileNotFoundException) {
-                sudoku.newGame()
-            }
+            sudoku.startGame()
     }
 
     override fun onPause() {
         super.onPause()
+
         if (sudoku.isRunning) {
-            backupManager.createBackup()
+            sudoku.createBackup()
         }
     }
 }
@@ -109,7 +104,7 @@ fun NewGameConfirmation(
 @Composable
 fun GameInfo(
     modifier: Modifier = Modifier,
-    sudokuGame: SudokuLogic
+    sudokuGame: SudokuViewModel
 ) {
     val difficulty = mapOf(
         Difficulty.BEGINNER to "Beginner",
@@ -245,7 +240,7 @@ fun Grid(
 fun SudokuButton(
     modifier: Modifier = Modifier,
     fieldData: LiveData<SudokuField>,
-    sudokuGame: SudokuLogic,
+    sudokuGame: SudokuViewModel,
     row: Int,
     col: Int,
     showHint: Boolean
@@ -345,7 +340,7 @@ fun SudokuButton(
 @Composable
 fun SudokuBox(
     modifier: Modifier = Modifier,
-    sudokuGame: SudokuLogic,
+    sudokuGame: SudokuViewModel,
     showHints: Boolean
 ) {
     Box()
@@ -458,7 +453,7 @@ fun AssistBar(
 fun NumPad(
     modifier: Modifier = Modifier,
     takeNotes: Boolean,
-    sudokuGame: SudokuLogic
+    sudokuGame: SudokuViewModel
 ) {
     for (i in 0..2) {
         Row(
@@ -491,7 +486,7 @@ fun NumPad(
 @Composable
 fun Game(
     modifier: Modifier = Modifier,
-    sudokuGame: SudokuLogic
+    sudokuGame: SudokuViewModel
 ) {
     var showHints by remember { mutableStateOf(false) }
     var takeNotes by remember { mutableStateOf(false) }
@@ -519,22 +514,4 @@ fun Game(
     }
 
 
-}
-
-@Preview(showBackground = true)
-@Composable
-fun DefaultPreview() {
-    SudokuTheme {
-        val sudoku = SudokuLogic()
-
-        sudoku.fieldSelected(2, 6)
-        sudoku.setFieldNumber("2", false)
-        sudoku.fieldSelected(2, 5)
-        sudoku.setFieldNumber("2", false)
-        sudoku.fieldSelected(3, 5)
-        sudoku.setFieldNumber("2", false)
-
-        Game(sudokuGame = sudoku)
-        //sudoku.newGame()
-    }
 }
