@@ -12,5 +12,6 @@ class BackupGame @OptIn(ExperimentalSerializationApi::class) constructor(
     @ProtoNumber(3) var puzzle: String = "",
     @ProtoNumber(4) var editable: List<Boolean> = emptyList(),
     @ProtoNumber(5) var notes: List<Int> = emptyList(),
-    @ProtoNumber(6) var history: List<BackupHistory> = emptyList()
+    @ProtoNumber(6) var history: List<BackupHistory> = emptyList(),
+    @ProtoNumber(7) var timeElapse: Long = 0L
 )

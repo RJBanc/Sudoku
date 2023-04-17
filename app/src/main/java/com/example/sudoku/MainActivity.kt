@@ -1,6 +1,7 @@
 package com.example.sudoku
 
 import android.os.Bundle
+import android.text.format.DateUtils
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -13,6 +14,7 @@ import androidx.compose.material.*
 import androidx.compose.material.ButtonDefaults.buttonColors
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
@@ -30,6 +32,7 @@ import androidx.lifecycle.LiveData
 import com.example.sudoku.ui.theme.Mint200
 import com.example.sudoku.ui.theme.Mint700
 import com.example.sudoku.ui.theme.SudokuTheme
+import java.util.*
 
 class MainActivity : ComponentActivity() {
     private val sudoku: SudokuViewModel by viewModels()
@@ -57,16 +60,18 @@ class MainActivity : ComponentActivity() {
     override fun onResume() {
         super.onResume()
 
-        if (!sudoku.isRunning)
+        if (!sudoku.instanciated)
             sudoku.startGame()
     }
 
     override fun onPause() {
         super.onPause()
 
-        if (sudoku.isRunning) {
+        if (sudoku.isRunning.value == true)
+            sudoku.pauseGame()
+
+        if (sudoku.instanciated)
             sudoku.createBackup()
-        }
     }
 }
 
@@ -100,6 +105,47 @@ fun NewGameConfirmation(
     )
 }
 
+@Composable
+fun GameTimer(
+    modifier: Modifier = Modifier,
+    sudokuGame: SudokuViewModel
+) {
+    val isRunning by sudokuGame.isRunning.observeAsState()
+    val timeElapsed by sudokuGame.timeElapsed.observeAsState()
+
+    Row(
+        modifier = modifier,
+        verticalAlignment = Alignment.CenterVertically
+    ){
+        IconButton(
+            modifier = modifier.fillMaxHeight(),
+            onClick = {
+                if (isRunning == true)
+                    sudokuGame.pauseGame()
+                else
+                    sudokuGame.resumeGame()
+            }
+        ) {
+            if (isRunning == true)
+                Icon(
+                    painterResource(id = R.drawable.pause_24px),
+                    contentDescription = "Pause Game",
+                    modifier = modifier,
+                )
+            else
+                Icon(
+                    painterResource(id = R.drawable.play_24px),
+                    contentDescription = "Pause Game",
+                    modifier = modifier,
+                )
+        }
+        Text(
+            modifier = modifier,
+            text = DateUtils.formatElapsedTime(timeElapsed ?: 0L)
+        )
+    }
+}
+
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun GameInfo(
@@ -116,61 +162,58 @@ fun GameInfo(
     )
     var expanded by remember { mutableStateOf(false) }
     var selectedDifficulty by remember { mutableStateOf(sudokuGame.difficulty) }
-
     var showConfirm by remember { mutableStateOf(false) }
 
     Row (
         modifier = modifier
-            .height(55.dp),
+            .height(55.dp)
+            .fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.Start
+        horizontalArrangement = Arrangement.Center
     ) {
-        Button(
-            modifier = modifier.fillMaxHeight(),
-            onClick = { sudokuGame.startNewGame() }
-        ) {
-            Icon(
-                Icons.Filled.Refresh,
-                contentDescription = "New Game",
-            )
-        }
-        Spacer(modifier = modifier.width(10.dp))
         Box(
-            modifier = modifier
+            modifier = modifier.weight(1f)
         ) {
-            ExposedDropdownMenuBox(
-                expanded = expanded,
-                onExpandedChange = {
-                    expanded = !expanded
-                }
+            Button(
+                modifier = modifier.fillMaxHeight(),
+                onClick = { expanded = !expanded }
             ) {
-                TextField(
-                    value = difficulty[selectedDifficulty]!!,
-                    onValueChange = {},
-                    readOnly = true,
-                    trailingIcon = {
-                        ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
-                    }
+                Icon(
+                    Icons.Filled.Refresh,
+                    contentDescription = "New Game",
                 )
+            }
 
-                ExposedDropdownMenu(
-                    expanded = expanded,
-                    onDismissRequest = { expanded = false }
-                ) {
-                    difficulty.forEach { item ->
-                        DropdownMenuItem(
-                            onClick = {
-                                if (item.key != selectedDifficulty) {
-                                    showConfirm = true
-                                }
-                                selectedDifficulty = item.key
-                                expanded = false
-                            }
-                        ) {
-                            Text(text = item.value)
+            DropdownMenu(
+                expanded = expanded,
+                onDismissRequest = { expanded = false }
+            ) {
+                difficulty.forEach { item ->
+                    DropdownMenuItem(
+                        onClick = {
+                            showConfirm = true
+                            selectedDifficulty = item.key
+                            expanded = false
                         }
+                    ) {
+                        Text(text = item.value)
                     }
                 }
+            }
+        }
+        GameTimer(modifier = modifier.weight(1f), sudokuGame = sudokuGame)
+        Row (
+            modifier = modifier.weight(1f),
+            horizontalArrangement = Arrangement.End
+        ) {
+            IconButton(
+                modifier = modifier,
+                onClick = { /*TODO*/ }
+            ) {
+                Icon(
+                    Icons.Filled.Settings,
+                    contentDescription = "Settings"
+                )
             }
         }
     }
@@ -337,6 +380,25 @@ fun SudokuButton(
         }
     }
 }
+
+@Composable
+fun hideGame(
+    modifier: Modifier = Modifier,
+    sudokuGame: SudokuViewModel
+) {
+    val isRunning by sudokuGame.isRunning.observeAsState()
+    val surface = MaterialTheme.colors.surface
+
+    if (isRunning == false)
+        Canvas(
+            modifier = modifier.size(360.dp)
+        ) {
+            drawRect(
+                color = surface,
+            )
+        }
+}
+
 @Composable
 fun SudokuBox(
     modifier: Modifier = Modifier,
@@ -366,6 +428,7 @@ fun SudokuBox(
             }
         }
         Grid()
+        hideGame(modifier = modifier, sudokuGame = sudokuGame)
     }
 }
 

@@ -1,6 +1,8 @@
 package com.example.sudoku
 
 import android.app.Application
+import android.os.Handler
+import android.os.Looper
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
@@ -16,13 +18,16 @@ import kotlin.random.nextInt
 
 class SudokuViewModel(application: Application) : AndroidViewModel(application) {
     var difficulty: Difficulty = Difficulty.EASY
-    var isRunning: Boolean = false
+    val isRunning: MutableLiveData<Boolean> = MutableLiveData(false)
+    val timeElapsed: MutableLiveData<Long> = MutableLiveData(0L)
+    var instanciated = false
     private val fields: Array<Array<MutableLiveData<SudokuField>>>
     private var solution: Array<Array<String?>>
     private val symbols = arrayOf("1", "2", "3", "4", "5", "6", "7", "8", "9")
     private var lastHighlighted: MutableList<MutableLiveData<SudokuField>>? = null
     private var currFieldCoords: Pair<Int, Int>? = null
     private val history: ArrayDeque<Triple<Pair<Int, Int>, String?, List<Int>>> = ArrayDeque()
+    private val handler: Handler = Handler(Looper.getMainLooper())
 
     private val stringToBitMap = mapOf<String?, Int>(
         "1" to 0b1,
@@ -58,6 +63,7 @@ class SudokuViewModel(application: Application) : AndroidViewModel(application) 
             } catch(e: FileNotFoundException) {
                 newGame()
             }
+            instanciated = true
         }
     }
 
@@ -65,6 +71,25 @@ class SudokuViewModel(application: Application) : AndroidViewModel(application) 
         viewModelScope.launch(Dispatchers.Default) {
             newGame(difficulty)
         }
+    }
+
+    fun pauseGame() {
+        isRunning.postValue(false)
+
+        handler.removeCallbacksAndMessages(null)
+    }
+
+    fun resumeGame() {
+        if (isRunning.value == true) return
+
+        isRunning.postValue(true)
+
+        handler.postDelayed(object : Runnable {
+            override fun run() {
+                timeElapsed.postValue((timeElapsed.value ?: 0L) + 1)
+                handler.postDelayed(this, 1000)
+            }
+        }, 1000)
     }
 
     fun newGame(difficulty: Difficulty = this.difficulty) {
@@ -129,8 +154,8 @@ class SudokuViewModel(application: Application) : AndroidViewModel(application) 
             }
         }
 
-        isRunning = true
-
+        timeElapsed.postValue(0L)
+        resumeGame()
     }
 
     fun getField(row: Int, col: Int): MutableLiveData<SudokuField> {
@@ -138,6 +163,8 @@ class SudokuViewModel(application: Application) : AndroidViewModel(application) 
     }
 
     fun setFieldNumber(s: String, isNote: Boolean) {
+        if (isRunning.value == false) return
+
         if (currFieldCoords == null) return
         val currField = fields[currFieldCoords!!.first][currFieldCoords!!.second]
         if (!currField.value!!.isEnabled) return
@@ -172,6 +199,8 @@ class SudokuViewModel(application: Application) : AndroidViewModel(application) 
     }
 
     fun fieldSelected(row: Int, col: Int) {
+        if (isRunning.value == false) return
+
         viewModelScope.launch(Dispatchers.Default) {
             currFieldCoords = Pair(row, col)
             val toBeHighlighted = SudokuUtil.getRelevantValues(fields, row, col).toMutableList()
@@ -213,6 +242,7 @@ class SudokuViewModel(application: Application) : AndroidViewModel(application) 
     }
 
     fun undo() {
+        if (isRunning.value == false) return
         val lastMove = history.removeLastOrNull() ?: return
 
         for ((i, field) in SudokuUtil.getRelevantValues(fields, lastMove.first.first, lastMove.first.second).withIndex()) {
@@ -249,7 +279,8 @@ class SudokuViewModel(application: Application) : AndroidViewModel(application) 
             puzzle = puzzle,
             editable = editable.toList(),
             notes = notes.toList(),
-            history = List(this.history.size) { BackupHistory(this.history[it]) }
+            history = List(this.history.size) { BackupHistory(this.history[it]) },
+            timeElapse = this.timeElapsed.value ?: 0L
         )
 
         viewModelScope.launch(Dispatchers.Default) {
@@ -263,6 +294,7 @@ class SudokuViewModel(application: Application) : AndroidViewModel(application) 
         }
 
         difficulty = backup.await().difficulty
+        timeElapsed.postValue(backup.await().timeElapse)
         lastHighlighted = null
         currFieldCoords = null
 
@@ -293,7 +325,7 @@ class SudokuViewModel(application: Application) : AndroidViewModel(application) 
             }
         }
 
-        isRunning = true
+        resumeGame()
     }
 
     private fun Array<Array<String?>>.copy() = Array(size) { get(it).clone() }
