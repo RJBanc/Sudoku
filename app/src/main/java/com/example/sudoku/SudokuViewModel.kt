@@ -20,7 +20,7 @@ class SudokuViewModel(application: Application) : AndroidViewModel(application) 
     private val fields: Array<Array<MutableLiveData<SudokuField>>>
     private var solution: Array<Array<String?>>
     private val symbols = arrayOf("1", "2", "3", "4", "5", "6", "7", "8", "9")
-    private var lastHighlighted: Array<MutableLiveData<SudokuField>>? = null
+    private var lastHighlighted: MutableList<MutableLiveData<SudokuField>>? = null
     private var currFieldCoords: Pair<Int, Int>? = null
     private val history: ArrayDeque<Triple<Pair<Int, Int>, String?, List<Int>>> = ArrayDeque()
 
@@ -172,47 +172,44 @@ class SudokuViewModel(application: Application) : AndroidViewModel(application) 
     }
 
     fun fieldSelected(row: Int, col: Int) {
-        currFieldCoords = Pair(row, col)
+        viewModelScope.launch(Dispatchers.Default) {
+            currFieldCoords = Pair(row, col)
+            val toBeHighlighted = SudokuUtil.getRelevantValues(fields, row, col).toMutableList()
 
-        val toBeHighlighted = SudokuUtil.getRelevantValues(fields, row, col).toMutableList()
-
-        if (lastHighlighted != null) {
-            for (field in lastHighlighted!!) {
-                field.value = field.value!!.copy(
-                    isHighlighted = false,
-                    isSelected = false,
-                )
-            }
-        }
-
-        if (fields[row][col].value!!.number != null) {
-            for (i in 0..8) {
-                for (j in 0..8) {
-                    if (fields[i][j].value!!.number == fields[row][col].value!!.number &&
-                            fields[i][j] !in toBeHighlighted) {
-                        fields[i][j].value = fields[i][j].value!!.copy(
-                            isHighlighted = true,
-                            isSelected = false,
-                        )
-                        toBeHighlighted.add(fields[i][j])
+            if (fields[row][col].value!!.number != null) {
+                for (i in 0..8) {
+                    for (j in 0..8) {
+                        if (fields[i][j].value!!.number == fields[row][col].value!!.number &&
+                            fields[i][j] !in toBeHighlighted)
+                            toBeHighlighted.add(fields[i][j])
                     }
                 }
             }
+
+            if (lastHighlighted != null) {
+                for (field in lastHighlighted!!) {
+                    if (field in toBeHighlighted) continue
+                    field.postValue(field.value!!.copy(
+                        isHighlighted = false,
+                        isSelected = false,
+                    ))
+                }
+            }
+
+            for (field in toBeHighlighted) {
+                field.postValue(field.value!!.copy(
+                    isHighlighted = true,
+                    isSelected = false,
+                ))
+            }
+
+            fields[row][col].postValue(fields[row][col].value!!.copy(
+                isHighlighted = false,
+                isSelected = true,
+            ))
+
+            lastHighlighted = toBeHighlighted
         }
-
-        for (field in toBeHighlighted) {
-            field.value = field.value!!.copy(
-                isHighlighted = true,
-                isSelected = false,
-            )
-        }
-
-        fields[row][col].value = fields[row][col].value!!.copy(
-            isHighlighted = false,
-            isSelected = true,
-        )
-
-        lastHighlighted = toBeHighlighted.toTypedArray()
     }
 
     fun undo() {
@@ -406,33 +403,7 @@ data class SudokuField(
     val solution: String? = null,
     val number: String? = null,
     val notes: Int = 0
-) {
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (javaClass != other?.javaClass) return false
-
-        other as SudokuField
-
-        if (isEnabled != other.isEnabled) return false
-        if (isHighlighted != other.isHighlighted) return false
-        if (isSelected != other.isHighlighted) return false
-        if (solution != other.solution) return false
-        if (number != other.number) return false
-        if (notes  != other.notes) return false
-
-        return true
-    }
-
-    override fun hashCode(): Int {
-        var result = isEnabled.hashCode()
-        result = 31 * result + isHighlighted.hashCode()
-        result = 31 * result + isSelected.hashCode()
-        result = 31 * result + (solution?.hashCode() ?: 0)
-        result = 31 * result + (number?.hashCode() ?: 0)
-        result = 31 * result + notes.hashCode()
-        return result
-    }
-}
+)
 
 enum class Difficulty {
     BEGINNER,
