@@ -1,4 +1,4 @@
-package com.example.sudoku
+package com.example.sudoku.viewmodel
 
 import android.app.Application
 import android.os.Handler
@@ -6,9 +6,12 @@ import android.os.Looper
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
+import com.example.sudoku.core.SudokuSolver
 import com.example.sudoku.data.backup.BackupGame
 import com.example.sudoku.data.backup.BackupHistory
 import com.example.sudoku.data.backup.BackupManager
+import com.example.sudoku.util.BitUtil
+import com.example.sudoku.util.SudokuUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch

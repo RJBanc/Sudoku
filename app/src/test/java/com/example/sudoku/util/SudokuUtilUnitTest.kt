@@ -1,4 +1,4 @@
-package com.example.sudoku
+package com.example.sudoku.util
 
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
@@ -22,13 +22,16 @@ class SudokuUtilUnitTest {
 
     @Test
     fun getRelevantValuesTest() {
-        assertArrayEquals(SudokuUtil.getRelevantValues(fullSudoku, 4, 4),
+        assertArrayEquals(
+            SudokuUtil.getRelevantValues(fullSudoku, 4, 4),
             arrayOf(9, 6, 3, 4, 5, 1, 2, 8, 7, 2, 6, 3, 9, 7, 8, 1, 7, 2, 9, 4, 3))
 
-        assertArrayEquals(SudokuUtil.getRelevantValues(fullSudoku, 0, 0),
+        assertArrayEquals(
+            SudokuUtil.getRelevantValues(fullSudoku, 0, 0),
             arrayOf(9, 7, 2, 6, 5, 8, 1, 3, 4, 6, 1, 4, 3, 8, 5, 4, 2, 5, 3, 7, 8))
 
-        assertArrayEquals(SudokuUtil.getRelevantValues(fullSudoku, 8, 8),
+        assertArrayEquals(
+            SudokuUtil.getRelevantValues(fullSudoku, 8, 8),
             arrayOf(8, 2, 7, 5, 3 ,9, 6, 4, 1, 8, 2, 9, 7, 3, 5, 5, 4, 6, 2, 8, 3))
     }
 
@@ -61,39 +64,50 @@ class SudokuUtilUnitTest {
 
     @Test
     fun getRowTest() {
-        assertArrayEquals(SudokuUtil.getRow(fullSudoku, 0),
+        assertArrayEquals(
+            SudokuUtil.getRow(fullSudoku, 0),
             arrayOf(9, 7, 2, 6, 1, 4, 3, 8, 5))
     }
 
     @Test
     fun getColumnTest() {
-        assertArrayEquals(SudokuUtil.getColumn(fullSudoku, 0),
+        assertArrayEquals(
+            SudokuUtil.getColumn(fullSudoku, 0),
             arrayOf(9, 6, 1, 4, 2, 5, 3, 7, 8))
     }
 
     @Test
     fun getSquareRowColTest() {
-        assertArrayEquals(SudokuUtil.getSquare(fullSudoku, 4, 4),
+        assertArrayEquals(
+            SudokuUtil.getSquare(fullSudoku, 4, 4),
             arrayOf(9, 6, 3, 4, 5, 1, 2, 8, 7))
-        assertArrayEquals(SudokuUtil.getSquare(fullSudoku, 0, 0),
+        assertArrayEquals(
+            SudokuUtil.getSquare(fullSudoku, 0, 0),
             arrayOf(9, 7, 2, 6, 5, 8, 1, 3, 4))
-        assertArrayEquals(SudokuUtil.getSquare(fullSudoku, 5, 4),
+        assertArrayEquals(
+            SudokuUtil.getSquare(fullSudoku, 5, 4),
             arrayOf(9, 6, 3, 4, 5, 1, 2, 8, 7))
-        assertArrayEquals(SudokuUtil.getSquare(fullSudoku, 4, 5),
+        assertArrayEquals(
+            SudokuUtil.getSquare(fullSudoku, 4, 5),
             arrayOf(9, 6, 3, 4, 5, 1, 2, 8, 7))
-        assertArrayEquals(SudokuUtil.getSquare(fullSudoku, 3, 4),
+        assertArrayEquals(
+            SudokuUtil.getSquare(fullSudoku, 3, 4),
             arrayOf(9, 6, 3, 4, 5, 1, 2, 8, 7))
-        assertArrayEquals(SudokuUtil.getSquare(fullSudoku, 4, 3),
+        assertArrayEquals(
+            SudokuUtil.getSquare(fullSudoku, 4, 3),
             arrayOf(9, 6, 3, 4, 5, 1, 2, 8, 7))
-        assertArrayEquals(SudokuUtil.getSquare(fullSudoku, 3, 3),
+        assertArrayEquals(
+            SudokuUtil.getSquare(fullSudoku, 3, 3),
             arrayOf(9, 6, 3, 4, 5, 1, 2, 8, 7))
     }
 
     @Test
     fun getSquareIndexTest() {
-        assertArrayEquals(SudokuUtil.getSquare(fullSudoku, 0),
+        assertArrayEquals(
+            SudokuUtil.getSquare(fullSudoku, 0),
             arrayOf(9, 7, 2, 6, 5, 8, 1, 3, 4))
-        assertArrayEquals(SudokuUtil.getSquare(fullSudoku, 4),
+        assertArrayEquals(
+            SudokuUtil.getSquare(fullSudoku, 4),
             arrayOf(9, 6, 3, 4, 5, 1, 2, 8, 7))
     }
 
@@ -106,7 +120,8 @@ class SudokuUtilUnitTest {
 
     @Test
     fun getSquareAsMatTest() {
-        assertArrayEquals(SudokuUtil.getSquareAsMat(fullSudoku, 4, 3),
+        assertArrayEquals(
+            SudokuUtil.getSquareAsMat(fullSudoku, 4, 3),
             arrayOf(
                 arrayOf(9, 6, 3),
                 arrayOf(4, 5, 1),

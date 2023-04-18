@@ -1,5 +1,6 @@
-package com.example.sudoku
+package com.example.sudoku.core
 
+import com.example.sudoku.exception.NoSolutionException
 import org.junit.Assert.*
 import org.junit.Test
 

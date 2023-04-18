@@ -1,4 +1,8 @@
-package com.example.sudoku
+package com.example.sudoku.core
+
+import com.example.sudoku.exception.NoSolutionException
+import com.example.sudoku.util.BitUtil
+import com.example.sudoku.util.SudokuUtil
 
 class SudokuSolver(private var grid: Array<Array<String?>>) {
     internal val candidates = Array(9) { Array(9) { 0b111111111 } }

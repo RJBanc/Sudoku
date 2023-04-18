@@ -1,4 +1,4 @@
-package com.example.sudoku
+package com.example.sudoku.util
 
 class SudokuUtil {
     companion object {

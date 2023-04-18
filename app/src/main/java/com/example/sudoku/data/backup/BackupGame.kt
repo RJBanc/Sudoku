@@ -1,6 +1,6 @@
 package com.example.sudoku.data.backup
 
-import com.example.sudoku.Difficulty
+import com.example.sudoku.viewmodel.Difficulty
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.protobuf.ProtoNumber
