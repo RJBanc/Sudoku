@@ -12,7 +12,6 @@ import androidx.compose.material.Surface
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.toArgb
 import androidx.core.view.WindowInsetsControllerCompat
-import com.example.sudoku.ui.GameScreen
 import com.example.sudoku.ui.theme.SudokuTheme
 import com.example.sudoku.viewmodel.SudokuViewModel
 
@@ -32,7 +31,7 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colors.background
                 ) {
-                    GameScreen(sudokuGame = sudoku)
+                    SudokuApp(sudokuViewModel = sudoku)
                 }
             }
         }

@@ -31,7 +31,8 @@ import java.util.*
 @Composable
 fun GameScreen(
     modifier: Modifier = Modifier,
-    sudokuGame: SudokuViewModel
+    sudokuGame: SudokuViewModel,
+    onSettingsClicked: () -> Unit
 ) {
     var showHints by remember { mutableStateOf(false) }
     var takeNotes by remember { mutableStateOf(false) }
@@ -43,7 +44,11 @@ fun GameScreen(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ){
-        GameInfo(modifier = modifier, sudokuGame = sudokuGame)
+        GameInfo(
+            modifier = modifier,
+            sudokuGame = sudokuGame,
+            onSettingsClicked = onSettingsClicked
+        )
         Spacer(modifier = modifier.height(10.dp))
         SudokuBox(modifier = modifier, sudokuGame = sudokuGame, showHints = showHints)
         Spacer(modifier = modifier.height(10.dp))
@@ -136,7 +141,8 @@ fun GameTimer(
 @Composable
 fun GameInfo(
     modifier: Modifier = Modifier,
-    sudokuGame: SudokuViewModel
+    sudokuGame: SudokuViewModel,
+    onSettingsClicked: () -> Unit
 ) {
     val difficulty = mapOf(
         Difficulty.BEGINNER to "Beginner",
@@ -194,7 +200,7 @@ fun GameInfo(
         ) {
             IconButton(
                 modifier = modifier,
-                onClick = { /*TODO*/ }
+                onClick = onSettingsClicked
             ) {
                 Icon(
                     Icons.Filled.Settings,
