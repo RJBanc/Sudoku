@@ -15,17 +15,24 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Popup
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.sudoku.ui.theme.SudokuTheme
+import com.example.sudoku.viewmodel.SettingsViewModel
 
 @Composable
 fun SettingsScreen(
     modifier: Modifier = Modifier,
     onBackClicked: () -> Unit
 ) {
-    val test = mapOf(
-        "Night" to {},
-        "Day" to {}
+    val settings: SettingsViewModel = viewModel(factory = SettingsViewModel.Factory)
+
+    val nightMode = mapOf(
+        "Dark" to { settings.selectNightMode("on") },
+        "Light" to { settings.selectNightMode("off") },
+        "System" to { settings.selectNightMode("system") }
     )
+
+
 
     Scaffold(
         modifier = modifier,
@@ -53,24 +60,36 @@ fun SettingsScreen(
         ) {
             ToggleSetting(
                 modifier = modifier,
-                settingName = "Hello",
-                settingStatus = true,
-                settingInfo = "What is love?",
-                onSettingChange = {}
+                settingName = "Keep Screen On",
+                settingStatus = settings.screenOn.collectAsState().value,
+                settingInfo = "Keep the screen permanently on while playing the game.",
+                onSettingChange = { set -> settings.selectScreenOn(set) }
             )
             ToggleSetting(
                 modifier = modifier,
-                settingName = "World",
-                settingStatus = false,
-                settingInfo = "Baby don't hurt me",
-                onSettingChange = {}
+                settingName = "Take Initial Notes",
+                settingStatus = settings.initialNotes.collectAsState().value,
+                settingInfo = "When starting a new game, automatically write down all initial notes. Change takes effect in new game.",
+                onSettingChange = { set -> settings.selectInitialNotes(set) }
+            )
+            ToggleSetting(
+                modifier = modifier,
+                settingName = "Confirm New Game",
+                settingStatus = settings.confirmNewGame.collectAsState().value,
+                settingInfo = "Ask for confirmation before starting a new game.",
+                onSettingChange = { set -> settings.selectNewGameConfirm(set) }
             )
             OptionSetting(
                 modifier = modifier,
-                settingName = "Yeah",
-                currentSetting = "Night",
-                settingInfo = "Baby don't hurt me",
-                settingOptions = test
+                settingName = "Dark Mode",
+                currentSetting = when(settings.nightMode.collectAsState().value) {
+                  "on" -> "Dark"
+                  "off" -> "Light"
+                  "system" -> "System"
+                  else -> "Error"
+                },
+                settingInfo = "Set the dark mode of this app.",
+                settingOptions = nightMode
             )
         }
     }
@@ -85,7 +104,6 @@ fun OptionSetting(
     settingOptions: Map<String, () -> Unit>
 ) {
     var expanded by remember { mutableStateOf(false) }
-    var currOption by remember { mutableStateOf(currentSetting) }
 
     SettingTemplate(
         modifier = modifier,
@@ -94,7 +112,7 @@ fun OptionSetting(
     ) {
         Box {
             OutlinedButton(onClick = { expanded = !expanded }) {
-                Text(currOption)
+                Text(currentSetting)
             }
             DropdownMenu(
                 modifier = modifier,
@@ -104,7 +122,6 @@ fun OptionSetting(
                 settingOptions.forEach {
                     DropdownMenuItem(
                         onClick = {
-                            currOption = it.key
                             expanded = !expanded
                             it.value()
                         }
@@ -125,7 +142,6 @@ fun ToggleSetting(
     settingStatus: Boolean,
     onSettingChange: ((Boolean) -> Unit)?
 ) {
-    var checked by remember { mutableStateOf(settingStatus) }
 
     SettingTemplate(
         modifier = modifier,
@@ -134,9 +150,8 @@ fun ToggleSetting(
     ) {
         Switch(
             modifier = modifier,
-            checked = checked,
+            checked = settingStatus,
             onCheckedChange = {
-                checked = !checked
                 onSettingChange?.invoke(it) }
         )
     }

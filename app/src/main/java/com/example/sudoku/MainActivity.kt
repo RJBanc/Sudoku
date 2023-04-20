@@ -9,10 +9,14 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Surface
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.toArgb
 import androidx.core.view.WindowInsetsControllerCompat
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.sudoku.ui.SudokuNavigation
 import com.example.sudoku.ui.theme.SudokuTheme
+import com.example.sudoku.viewmodel.SettingsViewModel
 import com.example.sudoku.viewmodel.SudokuViewModel
 
 class MainActivity : ComponentActivity() {
@@ -22,20 +26,35 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         setContent {
-            SudokuTheme {
+            val settings: SettingsViewModel = viewModel(factory = SettingsViewModel.Factory)
+
+            val darkMode = when(settings.nightMode.collectAsState().value) {
+                "on" -> true
+                "off" -> false
+                "system" -> isSystemInDarkTheme()
+                else -> false
+            }
+
+            SudokuTheme(darkTheme = darkMode) {
                 // A surface container using the 'background' color from the theme
+                if (settings.screenOn.collectAsState().value)
+                    this.window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+                else
+                    this.window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+
                 this.window.statusBarColor = MaterialTheme.colors.background.toArgb()
                 WindowInsetsControllerCompat(window, window.decorView)
-                    .isAppearanceLightStatusBars = !isSystemInDarkTheme()
+                    .isAppearanceLightStatusBars = !darkMode
+
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colors.background
                 ) {
-                    SudokuApp(sudokuViewModel = sudoku)
+                    SudokuNavigation(sudokuViewModel = sudoku)
                 }
             }
         }
-        window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+
     }
 
     override fun onResume() {

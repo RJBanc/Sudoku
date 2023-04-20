@@ -20,10 +20,12 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.LiveData
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.sudoku.R
 import com.example.sudoku.ui.theme.Mint200
 import com.example.sudoku.ui.theme.Mint700
 import com.example.sudoku.viewmodel.Difficulty
+import com.example.sudoku.viewmodel.SettingsViewModel
 import com.example.sudoku.viewmodel.SudokuField
 import com.example.sudoku.viewmodel.SudokuViewModel
 import java.util.*
@@ -156,6 +158,10 @@ fun GameInfo(
     var selectedDifficulty by remember { mutableStateOf(sudokuGame.difficulty) }
     var showConfirm by remember { mutableStateOf(false) }
 
+    val settings: SettingsViewModel = viewModel(factory = SettingsViewModel.Factory)
+    val confirmNewGame = settings.confirmNewGame.collectAsState().value
+    val initialNotes = settings.initialNotes.collectAsState().value
+
     Row (
         modifier = modifier
             .height(55.dp)
@@ -183,9 +189,12 @@ fun GameInfo(
                 difficulty.forEach { item ->
                     DropdownMenuItem(
                         onClick = {
-                            showConfirm = true
                             selectedDifficulty = item.key
                             expanded = false
+                            if (confirmNewGame)
+                                showConfirm = true
+                            else
+                                sudokuGame.startNewGame(selectedDifficulty, initialNotes)
                         }
                     ) {
                         Text(text = item.value)
@@ -214,7 +223,7 @@ fun GameInfo(
             modifier = modifier,
             confirm = {
                 if (it)
-                    sudokuGame.startNewGame(selectedDifficulty)
+                    sudokuGame.startNewGame(selectedDifficulty, initialNotes)
                 else
                     selectedDifficulty = sudokuGame.difficulty
                 showConfirm = false

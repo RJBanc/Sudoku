@@ -48,11 +48,7 @@ class SudokuViewModel(application: Application) : AndroidViewModel(application) 
         fields  = Array(9) {
             Array(9) {
                 MutableLiveData<SudokuField>(
-                    SudokuField(
-                        isEnabled = true,
-                        isHighlighted = false,
-                        isSelected = false
-                    )
+                    SudokuField()
                 )
             }
         }
@@ -70,9 +66,9 @@ class SudokuViewModel(application: Application) : AndroidViewModel(application) 
         }
     }
 
-    fun startNewGame(difficulty: Difficulty = this.difficulty) {
+    fun startNewGame(difficulty: Difficulty = this.difficulty, initialNotes: Boolean = false) {
         viewModelScope.launch(Dispatchers.Default) {
-            newGame(difficulty)
+            newGame(difficulty, initialNotes)
         }
     }
 
@@ -93,72 +89,6 @@ class SudokuViewModel(application: Application) : AndroidViewModel(application) 
                 handler.postDelayed(this, 1000)
             }
         }, 1000)
-    }
-
-    fun newGame(difficulty: Difficulty = this.difficulty) {
-        this.difficulty = difficulty
-
-        val difficultyRange = mapOf(
-            Difficulty.BEGINNER to 3600..4500,
-            Difficulty.EASY to 4300..5500,
-            Difficulty.MEDIUM to 5300..6900,
-            Difficulty.HARD to 6500..9300,
-            Difficulty.EVIL to 8300..14000,
-            Difficulty.DIABOLICAL to 11000..25000
-        )
-
-        history.clear()
-        val sudoku = Array(9) { arrayOfNulls<String>(9) }
-        val backup = ArrayDeque<Triple<Int, Int, String?>>()
-        val initialNumbsTaken = 40
-
-        prepareSudoku(sudoku, backup, initialNumbsTaken)
-
-        while (true) {
-            var difficultyScore = difficultyRange[this.difficulty]!!.first
-            var attempts = 5
-            do {
-                if (difficultyScore > difficultyRange[this.difficulty]!!.last) {
-                    val addVal = backup.removeLast()
-                    sudoku[addVal.first][addVal.second] = addVal.third
-                } else if (difficultyScore < difficultyRange[this.difficulty]!!.first)
-                    removeRandomNum(sudoku, backup)
-
-
-                val solver = SudokuSolver(sudoku.copy())
-                if (!solver.solve()) {
-                    if (attempts-- == 0) {
-                        attempts = 5
-                        difficultyScore = difficultyRange[this.difficulty]!!.first
-                        prepareSudoku(sudoku, backup, initialNumbsTaken)
-                        continue
-                    }
-                    val addVal = backup.removeLast()
-                    sudoku[addVal.first][addVal.second] = addVal.third
-                } else if (solver.finished()) {
-                    difficultyScore = solver.difficultyScore()
-                }
-            } while (difficultyScore !in difficultyRange[this.difficulty]!!)
-
-            if (checkNumSolutions(sudoku.copy()) == 1) break
-            do {
-                val addVal = backup.removeLast()
-                sudoku[addVal.first][addVal.second] = addVal.third
-            } while (checkNumSolutions(sudoku.copy()) != 1)
-        }
-
-        for (i in 0..8) {
-            for (j in 0..8) {
-                fields[i][j].postValue(fields[i][j].value!!.copy(
-                    isEnabled = sudoku[i][j] == null,
-                    number = sudoku[i][j],
-                    solution = solution[i][j]
-                ))
-            }
-        }
-
-        timeElapsed.postValue(0L)
-        resumeGame()
     }
 
     fun getField(row: Int, col: Int): MutableLiveData<SudokuField> {
@@ -333,6 +263,88 @@ class SudokuViewModel(application: Application) : AndroidViewModel(application) 
 
     private fun Array<Array<String?>>.copy() = Array(size) { get(it).clone() }
 
+    private fun newGame(difficulty: Difficulty = this.difficulty, initialNotes: Boolean = false) {
+        this.difficulty = difficulty
+
+        val difficultyRange = mapOf(
+            Difficulty.BEGINNER to 3600..4500,
+            Difficulty.EASY to 4300..5500,
+            Difficulty.MEDIUM to 5300..6900,
+            Difficulty.HARD to 6500..9300,
+            Difficulty.EVIL to 8300..14000,
+            Difficulty.DIABOLICAL to 11000..25000
+        )
+
+        history.clear()
+        val sudoku = Array(9) { arrayOfNulls<String>(9) }
+        val backup = ArrayDeque<Triple<Int, Int, String?>>()
+        val initialNumbsTaken = 40
+
+        prepareSudoku(sudoku, backup, initialNumbsTaken)
+
+        while (true) {
+            var difficultyScore = difficultyRange[this.difficulty]!!.first
+            var attempts = 5
+            do {
+                if (difficultyScore > difficultyRange[this.difficulty]!!.last) {
+                    val addVal = backup.removeLast()
+                    sudoku[addVal.first][addVal.second] = addVal.third
+                } else if (difficultyScore < difficultyRange[this.difficulty]!!.first)
+                    removeRandomNum(sudoku, backup)
+
+
+                val solver = SudokuSolver(sudoku.copy())
+                if (!solver.solve()) {
+                    if (attempts-- == 0) {
+                        attempts = 5
+                        difficultyScore = difficultyRange[this.difficulty]!!.first
+                        prepareSudoku(sudoku, backup, initialNumbsTaken)
+                        continue
+                    }
+                    val addVal = backup.removeLast()
+                    sudoku[addVal.first][addVal.second] = addVal.third
+                } else if (solver.finished()) {
+                    difficultyScore = solver.difficultyScore()
+                }
+            } while (difficultyScore !in difficultyRange[this.difficulty]!!)
+
+            if (checkNumSolutions(sudoku.copy()) == 1) break
+            do {
+                val addVal = backup.removeLast()
+                sudoku[addVal.first][addVal.second] = addVal.third
+            } while (checkNumSolutions(sudoku.copy()) != 1)
+        }
+
+        val noteArr = Array(9) { Array(9) { 0b111111111 } }
+        if (initialNotes) {
+            for (i in 0..8) {
+                for (j in 0..8) {
+                    if (sudoku[i][j] == null) continue
+
+                    SudokuUtil.applyToRelevantValues(noteArr, i, j) {
+                        BitUtil.removeBits(
+                            it, 1 shl (sudoku[i][j]!!.toInt() - 1)
+                        )
+                    }
+                }
+            }
+        }
+
+        for (i in 0..8) {
+            for (j in 0..8) {
+                fields[i][j].postValue(SudokuField(
+                    isEnabled = sudoku[i][j] == null,
+                    number = sudoku[i][j],
+                    solution = solution[i][j],
+                    notes = if (initialNotes) noteArr[i][j] else 0
+                ))
+            }
+        }
+
+        timeElapsed.postValue(0L)
+        resumeGame()
+    }
+
     private fun checkGrid(grid: Array<Array<String?>>): Boolean {
         for (row in grid) {
             if (null in row) {
@@ -432,9 +444,9 @@ class SudokuViewModel(application: Application) : AndroidViewModel(application) 
 }
 
 data class SudokuField(
-    val isEnabled: Boolean,
-    val isHighlighted: Boolean,
-    val isSelected: Boolean,
+    val isEnabled: Boolean = false,
+    val isHighlighted: Boolean = false,
+    val isSelected: Boolean = false,
     val solution: String? = null,
     val number: String? = null,
     val notes: Int = 0
