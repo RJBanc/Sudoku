@@ -13,7 +13,6 @@ import com.example.sudoku.data.backup.BackupManager
 import com.example.sudoku.util.BitUtil
 import com.example.sudoku.util.SudokuUtil
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import java.io.FileNotFoundException
 import kotlin.random.Random
@@ -23,14 +22,22 @@ class SudokuViewModel(application: Application) : AndroidViewModel(application) 
     var difficulty: Difficulty = Difficulty.EASY
     val isRunning: MutableLiveData<Boolean> = MutableLiveData(false)
     val timeElapsed: MutableLiveData<Long> = MutableLiveData(0L)
+    val isCompleted: MutableLiveData<Boolean> = MutableLiveData(false)
     var instanciated = false
-    private val fields: Array<Array<MutableLiveData<SudokuField>>>
-    private var solution: Array<Array<String?>>
+    private var unsolvedFields = 81
+    private var solution: Array<Array<String?>> = Array(9) { arrayOfNulls(9) }
     private val symbols = arrayOf("1", "2", "3", "4", "5", "6", "7", "8", "9")
     private var lastHighlighted: MutableList<MutableLiveData<SudokuField>>? = null
     private var currFieldCoords: Pair<Int, Int>? = null
     private val history: ArrayDeque<Triple<Pair<Int, Int>, String?, List<Int>>> = ArrayDeque()
     private val handler: Handler = Handler(Looper.getMainLooper())
+    private val fields: Array<Array<MutableLiveData<SudokuField>>> = Array(9) {
+        Array(9) {
+            MutableLiveData<SudokuField>(
+                SudokuField()
+            )
+        }
+    }
 
     private val stringToBitMap = mapOf<String?, Int>(
         "1" to 0b1,
@@ -44,23 +51,12 @@ class SudokuViewModel(application: Application) : AndroidViewModel(application) 
         "9" to 0b100000000
     )
 
-    init {
-        fields  = Array(9) {
-            Array(9) {
-                MutableLiveData<SudokuField>(
-                    SudokuField()
-                )
-            }
-        }
-        solution = Array(9) { arrayOfNulls(9) }
-    }
-
-    fun startGame() {
+    fun startGame(initialNotes: Boolean = false) {
         viewModelScope.launch(Dispatchers.Default) {
             try {
                 restoreBackup()
             } catch(e: FileNotFoundException) {
-                newGame()
+                newGame(initialNotes = initialNotes)
             }
             instanciated = true
         }
@@ -97,8 +93,8 @@ class SudokuViewModel(application: Application) : AndroidViewModel(application) 
 
     fun setFieldNumber(s: String, isNote: Boolean) {
         if (isRunning.value == false) return
-
         if (currFieldCoords == null) return
+
         val currField = fields[currFieldCoords!!.first][currFieldCoords!!.second]
         if (!currField.value!!.isEnabled) return
 
@@ -117,6 +113,11 @@ class SudokuViewModel(application: Application) : AndroidViewModel(application) 
                 notes = notes
             )
         } else {
+            if (currField.value!!.number == currField.value!!.solution)
+                unsolvedFields += 1
+            else if (s == currField.value!!.solution)
+                unsolvedFields -= 1
+
             for (field in SudokuUtil.getRelevantValues(fields, currFieldCoords!!.first, currFieldCoords!!.second)) {
                 var newNotes = field.value!!.notes
                 newNotes = BitUtil.removeBits(newNotes, stringToBitMap[s]!!)
@@ -129,6 +130,8 @@ class SudokuViewModel(application: Application) : AndroidViewModel(application) 
                     number = if(currField.value!!.number != s) s else null,
             )
         }
+
+        checkGameFinished()
     }
 
     fun fieldSelected(row: Int, col: Int) {
@@ -185,80 +188,97 @@ class SudokuViewModel(application: Application) : AndroidViewModel(application) 
         }
 
         val field = fields[lastMove.first.first][lastMove.first.second]
+
+        if (lastMove.second == field.value!!.number) return
+        if (lastMove.second == field.value!!.solution) unsolvedFields -= 1
+        else if (field.value!!.number == field.value!!.solution) unsolvedFields += 1
+
         field.value = field.value!!.copy(
             number = lastMove.second
         )
     }
 
     fun createBackup() {
-        var puzzle = ""
-        val editable = mutableListOf<Boolean>()
-        val notes = mutableListOf<Int>()
-
-        for (i in fields.indices) {
-            for (j in fields[0].indices) {
-                val fieldVal = fields[i][j].value!!
-                notes.add(fieldVal.notes)
-                puzzle += fieldVal.number ?: "0"
-                editable.add(fieldVal.isEnabled)
-            }
-        }
-
-        val backup = BackupGame(
-            difficulty = this.difficulty,
-            solution = this.solution.joinToString(separator = "") {
-                it.joinToString(separator = "")
-            },
-            puzzle = puzzle,
-            editable = editable.toList(),
-            notes = notes.toList(),
-            history = List(this.history.size) { BackupHistory(this.history[it]) },
-            timeElapse = this.timeElapsed.value ?: 0L
-        )
-
         viewModelScope.launch(Dispatchers.Default) {
-            BackupManager(getApplication()).createBackup(backup)
+            var puzzle = ""
+            val editable = mutableListOf<Boolean>()
+            val notes = mutableListOf<Int>()
+
+            for (i in fields.indices) {
+                for (j in fields[0].indices) {
+                    val fieldVal = fields[i][j].value!!
+                    notes.add(fieldVal.notes)
+                    puzzle += fieldVal.number ?: "0"
+                    editable.add(fieldVal.isEnabled)
+                }
+            }
+
+            val backup = BackupGame(
+                difficulty = difficulty,
+                solution = solution.joinToString(separator = "") {
+                    it.joinToString(separator = "")
+                },
+                puzzle = puzzle,
+                editable = editable.toList(),
+                notes = notes.toList(),
+                history = List(history.size) { BackupHistory(history[it]) },
+                timeElapse = timeElapsed.value ?: 0L,
+                unsolvedFields = unsolvedFields
+            )
+
+
+                BackupManager(getApplication()).createBackup(backup)
         }
     }
 
-    suspend fun restoreBackup() {
-        val backup =  viewModelScope.async {
-            BackupManager(getApplication()).restoreBackup()
-        }
+    private suspend fun restoreBackup() {
+        val backup = BackupManager(getApplication()).restoreBackup()
 
-        difficulty = backup.await().difficulty
-        timeElapsed.postValue(backup.await().timeElapse)
+        difficulty = backup.difficulty
+        timeElapsed.postValue(backup.timeElapse)
+        isCompleted.postValue(false)
         lastHighlighted = null
         currFieldCoords = null
+        unsolvedFields = backup.unsolvedFields
 
         solution = Array(9) { it ->
             Array(9) { jt ->
-                val numb = backup.await().solution[it * 9 + jt].toString()
+                val numb = backup.solution[it * 9 + jt].toString()
                 if (numb != "0") numb else null
             }
         }
 
         history.clear()
-        for (entry in backup.await().history) history.addLast(entry.getHistory())
+        for (entry in backup.history) history.addLast(entry.getHistory())
 
         for (i in fields.indices) {
             for (j in fields[0].indices) {
                 val listIndex = i * 9 + j
                 fields[i][j].postValue(fields[i][j].value!!.copy(
-                    isEnabled = backup.await().editable[listIndex],
+                    isEnabled = backup.editable[listIndex],
                     isHighlighted = false,
                     isSelected = false,
-                    solution = backup.await().solution[listIndex].toString(),
-                    number = if (backup.await().puzzle[listIndex] != '0')
-                        backup.await().puzzle[listIndex].toString()
+                    solution = backup.solution[listIndex].toString(),
+                    number = if (backup.puzzle[listIndex] != '0')
+                        backup.puzzle[listIndex].toString()
                     else
                         null,
-                    notes = backup.await().notes[listIndex]
+                    notes = backup.notes[listIndex]
                 ))
             }
         }
 
         resumeGame()
+    }
+
+    private fun checkGameFinished() {
+        if (unsolvedFields > 0) return
+
+        viewModelScope.launch(Dispatchers.Default) {
+            BackupManager(getApplication()).deleteBackup()
+        }
+        isCompleted.value = true
+        pauseGame()
     }
 
     private fun Array<Array<String?>>.copy() = Array(size) { get(it).clone() }
@@ -316,11 +336,13 @@ class SudokuViewModel(application: Application) : AndroidViewModel(application) 
         }
 
         val noteArr = Array(9) { Array(9) { 0b111111111 } }
-        if (initialNotes) {
-            for (i in 0..8) {
-                for (j in 0..8) {
-                    if (sudoku[i][j] == null) continue
+        unsolvedFields = 81
+        for (i in 0..8) {
+            for (j in 0..8) {
+                if (sudoku[i][j] == null) continue
 
+                unsolvedFields -= 1
+                if (initialNotes) {
                     SudokuUtil.applyToRelevantValues(noteArr, i, j) {
                         BitUtil.removeBits(
                             it, 1 shl (sudoku[i][j]!!.toInt() - 1)
@@ -329,6 +351,7 @@ class SudokuViewModel(application: Application) : AndroidViewModel(application) 
                 }
             }
         }
+
 
         for (i in 0..8) {
             for (j in 0..8) {
@@ -342,6 +365,7 @@ class SudokuViewModel(application: Application) : AndroidViewModel(application) 
         }
 
         timeElapsed.postValue(0L)
+        isCompleted.postValue(false)
         resumeGame()
     }
 
@@ -386,7 +410,7 @@ class SudokuViewModel(application: Application) : AndroidViewModel(application) 
         }
     }
 
-    internal fun makeSolution(): Boolean {
+    private fun makeSolution(): Boolean {
         var row = 0
         var col = 0
         for (i in 0..81) {
@@ -413,7 +437,7 @@ class SudokuViewModel(application: Application) : AndroidViewModel(application) 
         return false
     }
 
-     internal fun checkNumSolutions(grid: Array<Array<String?>>): Int {
+     private fun checkNumSolutions(grid: Array<Array<String?>>): Int {
         var numSolutions = 0
         fun checkNumSolutionsRec(grid: Array<Array<String?>>) {
             var row = 0

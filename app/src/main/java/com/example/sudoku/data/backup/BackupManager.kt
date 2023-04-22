@@ -29,4 +29,11 @@ class BackupManager(
             }
         }
     }
+
+    @OptIn(ExperimentalSerializationApi::class)
+    suspend fun deleteBackup() {
+        withContext(Dispatchers.IO) {
+            context.deleteFile(backupFileName)
+        }
+    }
 }

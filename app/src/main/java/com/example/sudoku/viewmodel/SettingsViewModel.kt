@@ -18,10 +18,17 @@ class SettingsViewModel(
 ) : ViewModel() {
 
     companion object {
+        @Volatile
+        private var Instance: SettingsViewModel? = null
+
         val Factory: ViewModelProvider.Factory = viewModelFactory {
             initializer {
-                val application = (this[APPLICATION_KEY] as SudokuApplication)
-                SettingsViewModel(application.userPreferencesRepository)
+                Instance ?: synchronized(this) {
+                    val application = (this[APPLICATION_KEY] as SudokuApplication)
+                    SettingsViewModel(application.userPreferencesRepository).also {
+                        Instance = it
+                    }
+                }
             }
         }
     }

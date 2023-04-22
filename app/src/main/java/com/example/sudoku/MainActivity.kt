@@ -59,9 +59,12 @@ class MainActivity : ComponentActivity() {
 
     override fun onResume() {
         super.onResume()
+        val settings: SettingsViewModel by viewModels(
+            factoryProducer = { SettingsViewModel.Factory }
+        )
 
         if (!sudoku.instanciated)
-            sudoku.startGame()
+            sudoku.startGame(initialNotes = settings.initialNotes.value)
     }
 
     override fun onPause() {
@@ -70,7 +73,7 @@ class MainActivity : ComponentActivity() {
         if (sudoku.isRunning.value == true)
             sudoku.pauseGame()
 
-        if (sudoku.instanciated)
+        if (sudoku.instanciated && !sudoku.isCompleted.value!!)
             sudoku.createBackup()
     }
 }

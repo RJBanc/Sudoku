@@ -64,8 +64,34 @@ fun GameScreen(
         Spacer(modifier = modifier.height(10.dp))
         NumPad(modifier = modifier, takeNotes = takeNotes, sudokuGame = sudokuGame)
     }
+    GameFinished(sudokuGame = sudokuGame)
+}
 
+@Composable
+fun GameFinished(
+    modifier: Modifier = Modifier,
+    sudokuGame: SudokuViewModel
+) {
+    val isFinished by sudokuGame.isCompleted.observeAsState()
+    val settings: SettingsViewModel = viewModel(factory = SettingsViewModel.Factory)
+    val initialNotes = settings.initialNotes.collectAsState().value
 
+    if (isFinished == true) {
+        AlertDialog(
+            modifier = modifier,
+            onDismissRequest = {  },
+            title = { Text("SUCCESS") },
+            text = { Text("You did it!") },
+            buttons = {
+                Button(
+                    modifier = modifier,
+                    onClick = { sudokuGame.startNewGame(initialNotes = initialNotes) }
+                ) {
+                    Text("Start New Game!")
+                }
+            }
+        )
+    }
 }
 
 @Composable
