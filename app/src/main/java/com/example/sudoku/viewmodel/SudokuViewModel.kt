@@ -6,15 +6,20 @@ import android.os.Looper
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
+import com.example.sudoku.SudokuApplication
 import com.example.sudoku.core.SudokuSolver
 import com.example.sudoku.data.backup.BackupGame
 import com.example.sudoku.data.backup.BackupHistory
 import com.example.sudoku.data.backup.BackupManager
+import com.example.sudoku.data.db.DBRepository
+import com.example.sudoku.data.db.highscore.HighScoreEntity
 import com.example.sudoku.util.BitUtil
 import com.example.sudoku.util.SudokuUtil
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import java.io.FileNotFoundException
+import kotlin.math.min
 import kotlin.random.Random
 import kotlin.random.nextInt
 
@@ -31,6 +36,7 @@ class SudokuViewModel(application: Application) : AndroidViewModel(application) 
     private var currFieldCoords: Pair<Int, Int>? = null
     private val history: ArrayDeque<Triple<Pair<Int, Int>, String?, List<Int>>> = ArrayDeque()
     private val handler: Handler = Handler(Looper.getMainLooper())
+    private val repository: DBRepository = getApplication<SudokuApplication>().container.sudokuRepository
     private val fields: Array<Array<MutableLiveData<SudokuField>>> = Array(9) {
         Array(9) {
             MutableLiveData<SudokuField>(
@@ -51,12 +57,15 @@ class SudokuViewModel(application: Application) : AndroidViewModel(application) 
         "9" to 0b100000000
     )
 
-    fun startGame(initialNotes: Boolean = false) {
+    fun startGame() {
         viewModelScope.launch(Dispatchers.Default) {
             try {
                 restoreBackup()
             } catch(e: FileNotFoundException) {
-                newGame(initialNotes = initialNotes)
+                newGame(initialNotes = getApplication<SudokuApplication>()
+                    .userPreferencesRepository
+                    .createInitialNotes
+                    .firstOrNull() ?: false)
             }
             instanciated = true
         }
@@ -198,6 +207,15 @@ class SudokuViewModel(application: Application) : AndroidViewModel(application) 
         )
     }
 
+    fun getHighScore(): StateFlow<Long> {
+        return repository.getHighScore(difficulty).map { it?.time ?: Long.MAX_VALUE  }
+            .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5_000L),
+            initialValue = Long.MAX_VALUE
+        )
+    }
+
     fun createBackup() {
         viewModelScope.launch(Dispatchers.Default) {
             var puzzle = ""
@@ -227,7 +245,7 @@ class SudokuViewModel(application: Application) : AndroidViewModel(application) 
             )
 
 
-                BackupManager(getApplication()).createBackup(backup)
+            BackupManager(getApplication()).createBackup(backup)
         }
     }
 
@@ -274,11 +292,30 @@ class SudokuViewModel(application: Application) : AndroidViewModel(application) 
     private fun checkGameFinished() {
         if (unsolvedFields > 0) return
 
+        pauseGame()
+        isCompleted.value = true
         viewModelScope.launch(Dispatchers.Default) {
             BackupManager(getApplication()).deleteBackup()
         }
-        isCompleted.value = true
-        pauseGame()
+        updateHighScore()
+    }
+
+    private fun updateHighScore() {
+        if (isCompleted.value != true) return
+
+        viewModelScope.launch(Dispatchers.IO) {
+            val currentHS = repository.getHighScore(difficulty).firstOrNull()
+
+            if (currentHS == null)
+                repository.insertHighScore(HighScoreEntity(
+                    difficulty = difficulty,
+                    time = timeElapsed.value ?: Long.MAX_VALUE
+                ))
+            else
+                repository.updateHighScore(currentHS.copy(
+                    time = min(timeElapsed.value ?: Long.MAX_VALUE, currentHS.time)
+                ))
+        }
     }
 
     private fun Array<Array<String?>>.copy() = Array(size) { get(it).clone() }
@@ -287,7 +324,7 @@ class SudokuViewModel(application: Application) : AndroidViewModel(application) 
         this.difficulty = difficulty
 
         val difficultyRange = mapOf(
-            Difficulty.BEGINNER to 3600..4500,
+            Difficulty.BEGINNER to 0..4500,//Difficulty.BEGINNER to 3600..4500,
             Difficulty.EASY to 4300..5500,
             Difficulty.MEDIUM to 5300..6900,
             Difficulty.HARD to 6500..9300,
@@ -298,7 +335,7 @@ class SudokuViewModel(application: Application) : AndroidViewModel(application) 
         history.clear()
         val sudoku = Array(9) { arrayOfNulls<String>(9) }
         val backup = ArrayDeque<Triple<Int, Int, String?>>()
-        val initialNumbsTaken = 40
+        val initialNumbsTaken = 2
 
         prepareSudoku(sudoku, backup, initialNumbsTaken)
 
@@ -378,7 +415,7 @@ class SudokuViewModel(application: Application) : AndroidViewModel(application) 
         return true
     }
 
-    private fun prepareSudoku(sudoku: Array<Array<String?>>, backup: ArrayDeque<Triple<Int, Int, String?>>, initialNumbsTaken: Int = 30) {
+    private fun prepareSudoku(sudoku: Array<Array<String?>>, backup: ArrayDeque<Triple<Int, Int, String?>>, initialNumbsTaken: Int) {
         solution = Array(9) { arrayOfNulls(9) }
         makeSolution()
 

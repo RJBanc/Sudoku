@@ -75,13 +75,25 @@ fun GameFinished(
     val isFinished by sudokuGame.isCompleted.observeAsState()
     val settings: SettingsViewModel = viewModel(factory = SettingsViewModel.Factory)
     val initialNotes = settings.initialNotes.collectAsState().value
+    val gameTime = DateUtils.formatElapsedTime(sudokuGame.timeElapsed.value ?: Long.MAX_VALUE)
+    val bestTime = DateUtils.formatElapsedTime(sudokuGame.getHighScore().collectAsState().value)
 
     if (isFinished == true) {
         AlertDialog(
-            modifier = modifier,
+            modifier = modifier
+                .padding(5.dp),
             onDismissRequest = {  },
-            title = { Text("SUCCESS") },
-            text = { Text("You did it!") },
+            title = { Text("You did it!") },
+            text = {
+                Column(
+                    modifier = Modifier,
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    Text("Best Time: $bestTime")
+                    Text("Your Time: $gameTime")
+                }
+            },
             buttons = {
                 Button(
                     modifier = modifier,

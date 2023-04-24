@@ -62,6 +62,7 @@ class UserPreferencesRepository(
 
 
     suspend fun saveScreenOnPreference(keepScreenOn: Boolean) {
+        dataStore
         try {
             dataStore.edit {
                 it[KEEP_SCREEN_ON] = keepScreenOn

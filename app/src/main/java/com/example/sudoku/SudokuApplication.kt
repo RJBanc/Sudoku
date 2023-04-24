@@ -5,6 +5,8 @@ import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.preferencesDataStore
+import com.example.sudoku.data.db.AppContainer
+import com.example.sudoku.data.db.AppDataContainer
 import com.example.sudoku.data.preferences.UserPreferencesRepository
 
 private const val LAYOUT_PREFERENCE_NAME = "app_preferences"
@@ -14,9 +16,11 @@ private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(
 
 class SudokuApplication: Application() {
     lateinit var userPreferencesRepository: UserPreferencesRepository
+    lateinit var container: AppContainer
 
     override fun onCreate() {
         super.onCreate()
         userPreferencesRepository = UserPreferencesRepository(dataStore)
+        container = AppDataContainer(this)
     }
 }

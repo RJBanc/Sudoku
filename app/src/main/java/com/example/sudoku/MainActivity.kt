@@ -64,7 +64,7 @@ class MainActivity : ComponentActivity() {
         )
 
         if (!sudoku.instanciated)
-            sudoku.startGame(initialNotes = settings.initialNotes.value)
+            sudoku.startGame()
     }
 
     override fun onPause() {
