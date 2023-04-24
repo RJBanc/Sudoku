@@ -12,6 +12,7 @@ import androidx.compose.material.Surface
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.toArgb
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.sudoku.ui.SudokuNavigation
@@ -25,6 +26,8 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        installSplashScreen().setKeepOnScreenCondition{sudoku.instanciated.value!!}
+
         setContent {
             val settings: SettingsViewModel = viewModel(factory = SettingsViewModel.Factory)
 
@@ -36,7 +39,6 @@ class MainActivity : ComponentActivity() {
             }
 
             SudokuTheme(darkTheme = darkMode) {
-                // A surface container using the 'background' color from the theme
                 if (settings.screenOn.collectAsState().value)
                     this.window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
                 else
@@ -59,11 +61,8 @@ class MainActivity : ComponentActivity() {
 
     override fun onResume() {
         super.onResume()
-        val settings: SettingsViewModel by viewModels(
-            factoryProducer = { SettingsViewModel.Factory }
-        )
 
-        if (!sudoku.instanciated)
+        if (sudoku.instanciated.value != true)
             sudoku.startGame()
     }
 
@@ -73,7 +72,7 @@ class MainActivity : ComponentActivity() {
         if (sudoku.isRunning.value == true)
             sudoku.pauseGame()
 
-        if (sudoku.instanciated && !sudoku.isCompleted.value!!)
+        if (sudoku.instanciated.value == true && !sudoku.isCompleted.value!!)
             sudoku.createBackup()
     }
 }

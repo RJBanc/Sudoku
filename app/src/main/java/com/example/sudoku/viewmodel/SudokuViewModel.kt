@@ -30,9 +30,8 @@ class SudokuViewModel(application: Application) : AndroidViewModel(application) 
     val isRunning: MutableLiveData<Boolean> = MutableLiveData(false)
     val timeElapsed: MutableLiveData<Long> = MutableLiveData(0L)
     val isCompleted: MutableLiveData<Boolean> = MutableLiveData(false)
-    var instanciated = false
+    var instanciated: MutableLiveData<Boolean> = MutableLiveData(false)
     private var unsolvedFields = 81
-    //private var solution: Array<Array<String?>> = Array(9) { arrayOfNulls(9) }
     private val symbols = arrayOf("1", "2", "3", "4", "5", "6", "7", "8", "9")
     private var lastHighlighted: MutableList<MutableLiveData<SudokuField>>? = null
     private var currFieldCoords: Pair<Int, Int>? = null
@@ -70,7 +69,7 @@ class SudokuViewModel(application: Application) : AndroidViewModel(application) 
                     .createInitialNotes
                     .firstOrNull() ?: false)
             }
-            instanciated = true
+            instanciated.postValue(true)
         }
     }
 
