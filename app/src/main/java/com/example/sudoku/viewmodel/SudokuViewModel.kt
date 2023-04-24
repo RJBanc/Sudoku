@@ -324,7 +324,7 @@ class SudokuViewModel(application: Application) : AndroidViewModel(application) 
         this.difficulty = difficulty
 
         val difficultyRange = mapOf(
-            Difficulty.BEGINNER to 0..4500,//Difficulty.BEGINNER to 3600..4500,
+            Difficulty.BEGINNER to 3600..4500,
             Difficulty.EASY to 4300..5500,
             Difficulty.MEDIUM to 5300..6900,
             Difficulty.HARD to 6500..9300,
@@ -335,7 +335,7 @@ class SudokuViewModel(application: Application) : AndroidViewModel(application) 
         history.clear()
         val sudoku = Array(9) { arrayOfNulls<String>(9) }
         val backup = ArrayDeque<Triple<Int, Int, String?>>()
-        val initialNumbsTaken = 2
+        val initialNumbsTaken = 40
 
         prepareSudoku(sudoku, backup, initialNumbsTaken)
 
