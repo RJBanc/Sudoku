@@ -26,7 +26,8 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        installSplashScreen().setKeepOnScreenCondition{sudoku.instanciated.value!!}
+        if(!BuildConfig.BUILD_TYPE.contains("benchmark"))
+            installSplashScreen().setKeepOnScreenCondition{sudoku.instanciated.value!!}
 
         setContent {
             val settings: SettingsViewModel = viewModel(factory = SettingsViewModel.Factory)

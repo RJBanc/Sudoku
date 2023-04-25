@@ -11,12 +11,16 @@ import androidx.compose.material.icons.filled.Settings
 import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.LiveData
@@ -30,6 +34,7 @@ import com.example.sudoku.viewmodel.SudokuField
 import com.example.sudoku.viewmodel.SudokuViewModel
 import java.util.*
 
+@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun GameScreen(
     modifier: Modifier = Modifier,
@@ -47,12 +52,12 @@ fun GameScreen(
         verticalArrangement = Arrangement.Center
     ){
         GameInfo(
-            modifier = modifier,
+            modifier = modifier.semantics { testTagsAsResourceId = true },
             sudokuGame = sudokuGame,
             onSettingsClicked = onSettingsClicked
         )
         Spacer(modifier = modifier.height(10.dp))
-        SudokuBox(modifier = modifier, sudokuGame = sudokuGame, showHints = showHints)
+        SudokuBox(modifier = modifier.semantics { testTagsAsResourceId = true }, sudokuGame = sudokuGame, showHints = showHints)
         Spacer(modifier = modifier.height(10.dp))
         AssistBar(modifier = modifier,
             takeNotes = takeNotes,
@@ -211,7 +216,9 @@ fun GameInfo(
             modifier = modifier.weight(1f)
         ) {
             Button(
-                modifier = modifier.fillMaxHeight(),
+                modifier = modifier
+                    .fillMaxHeight()
+                    .testTag("newGame"),
                 onClick = { expanded = !expanded }
             ) {
                 Icon(
@@ -221,11 +228,14 @@ fun GameInfo(
             }
 
             DropdownMenu(
+                modifier = modifier,
                 expanded = expanded,
                 onDismissRequest = { expanded = false }
             ) {
                 difficulty.forEach { item ->
                     DropdownMenuItem(
+                        modifier = modifier
+                            .testTag(item.value),
                         onClick = {
                             selectedDifficulty = item.key
                             expanded = false
@@ -355,7 +365,8 @@ fun SudokuButton(
     Button (
         modifier = modifier
             .height(40.dp)
-            .width(40.dp),
+            .width(40.dp)
+            .testTag(row.toString() + col.toString()),
         elevation = null,
         shape = GenericShape { size, _ ->
             addRect(
