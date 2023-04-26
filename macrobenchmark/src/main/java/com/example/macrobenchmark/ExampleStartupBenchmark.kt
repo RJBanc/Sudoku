@@ -1,5 +1,7 @@
 package com.example.macrobenchmark
 
+import androidx.benchmark.macro.BaselineProfileMode
+import androidx.benchmark.macro.CompilationMode
 import androidx.benchmark.macro.StartupMode
 import androidx.benchmark.macro.StartupTimingMetric
 import androidx.benchmark.macro.junit4.MacrobenchmarkRule
@@ -26,8 +28,24 @@ class ExampleStartupBenchmark {
     val benchmarkRule = MacrobenchmarkRule()
 
     @Test
-    fun startup() = benchmarkRule.measureRepeated(
+    fun startUpDefault() = startup(CompilationMode.DEFAULT)
+
+    @Test
+    fun startUpNoCompile() = startup(CompilationMode.Partial(BaselineProfileMode.Disable, warmupIterations = 3))
+
+    //JIT doesnt work for some reason
+//    @Test
+//    fun startUpNoCompile2() = startup(CompilationMode.None())
+
+    @Test
+    fun startUpBaseline() = startup(CompilationMode.Partial(BaselineProfileMode.Require))
+
+    @Test
+    fun startUpFull() = startup(CompilationMode.Full())
+
+    private fun startup(compilationMode: CompilationMode) = benchmarkRule.measureRepeated(
         packageName = "com.example.sudoku",
+        compilationMode = compilationMode,
         metrics = listOf(StartupTimingMetric()),
         iterations = 5,
         startupMode = StartupMode.COLD,

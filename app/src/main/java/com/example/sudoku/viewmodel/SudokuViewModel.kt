@@ -17,10 +17,14 @@ import com.example.sudoku.data.db.sudoku.SudokuEntity
 import com.example.sudoku.util.BitUtil
 import com.example.sudoku.util.SudokuUtil
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.io.FileNotFoundException
 import kotlin.math.min
 import kotlin.random.Random
 import kotlin.random.nextInt
@@ -63,7 +67,7 @@ class SudokuViewModel(application: Application) : AndroidViewModel(application) 
         viewModelScope.launch(Dispatchers.Default) {
             try {
                 restoreBackup()
-            } catch(e: FileNotFoundException) {
+            } catch(e: Exception) {
                 newGame(initialNotes = getApplication<SudokuApplication>()
                     .userPreferencesRepository
                     .createInitialNotes

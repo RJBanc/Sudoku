@@ -123,7 +123,8 @@ fun NewGameConfirmation(
         text = { Text("Do you want to start a new game?") },
         confirmButton = {
             Button(
-                modifier = modifier,
+                modifier = modifier
+                    .testTag("start"),
                 onClick = { confirm(true) }
             ) {
                 Text("Start New Game!")

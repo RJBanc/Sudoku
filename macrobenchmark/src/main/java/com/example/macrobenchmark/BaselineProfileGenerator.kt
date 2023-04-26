@@ -17,9 +17,10 @@ class BaselineProfileGenerator {
             pressHome()
             startActivityAndWait()
             device.wait(Until.hasObject(By.res("43")), 5_000)
-            device.findObject(By.res("43"))?.click()
+            device.findObject(By.res("43")).click()
             device.findObject(By.res("newGame")).click()
             device.findObject(By.res("Hard")).click()
+            device.findObject(By.res("start"))?.click()
         }
     )
 }
