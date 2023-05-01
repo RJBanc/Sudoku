@@ -24,7 +24,6 @@ import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import kotlin.math.min
 import kotlin.random.Random
 import kotlin.random.nextInt
@@ -64,7 +63,7 @@ class SudokuViewModel(application: Application) : AndroidViewModel(application) 
 
     fun startGame() {
         sudokuSupply()
-        viewModelScope.launch(Dispatchers.Default) {
+        viewModelScope.launch {
             try {
                 restoreBackup()
             } catch(e: Exception) {
@@ -78,7 +77,7 @@ class SudokuViewModel(application: Application) : AndroidViewModel(application) 
     }
 
     fun startNewGame(difficulty: Difficulty = this.difficulty, initialNotes: Boolean = false) {
-        viewModelScope.launch(Dispatchers.Default) {
+        viewModelScope.launch {
             newGame(difficulty, initialNotes)
         }
     }
@@ -152,7 +151,7 @@ class SudokuViewModel(application: Application) : AndroidViewModel(application) 
     fun fieldSelected(row: Int, col: Int) {
         if (isRunning.value == false) return
 
-        viewModelScope.launch(Dispatchers.Default) {
+        viewModelScope.launch {
             currFieldCoords = Pair(row, col)
             val toBeHighlighted = SudokuUtil.getRelevantValues(fields, row, col).toMutableList()
 
@@ -223,7 +222,7 @@ class SudokuViewModel(application: Application) : AndroidViewModel(application) 
     }
 
     fun createBackup() {
-        viewModelScope.launch(Dispatchers.Default) {
+        viewModelScope.launch {
             var puzzle = ""
             var solution = ""
             val editable = mutableListOf<Boolean>()
@@ -302,7 +301,7 @@ class SudokuViewModel(application: Application) : AndroidViewModel(application) 
     private fun updateHighScore() {
         if (isCompleted.value != true) return
 
-        viewModelScope.launch(Dispatchers.IO) {
+        viewModelScope.launch {
             val currentHS = repository.getHighScore(difficulty).firstOrNull()
 
             if (currentHS == null)
@@ -423,23 +422,19 @@ class SudokuViewModel(application: Application) : AndroidViewModel(application) 
     ) {
         val sudokuEntity = repository.getSudoku(difficulty).first()!!
 
-        withContext(Dispatchers.IO) {
+        for (i in 0..8) {
+            for (j in 0..8) {
+                val listIndex = i * 9 + j
 
+                sudoku[i][j] = if (sudokuEntity.puzzle[listIndex] != '0')
+                    sudokuEntity.puzzle[listIndex].toString()
+                else
+                    null
 
-            for (i in 0..8) {
-                for (j in 0..8) {
-                    val listIndex = i * 9 + j
-
-                    sudoku[i][j] = if (sudokuEntity.puzzle[listIndex] != '0')
-                        sudokuEntity.puzzle[listIndex].toString()
-                    else
-                        null
-
-                    solution[i][j] = if (sudokuEntity.solution[listIndex] != '0')
-                        sudokuEntity.solution[listIndex].toString()
-                    else
-                        null
-                }
+                solution[i][j] = if (sudokuEntity.solution[listIndex] != '0')
+                    sudokuEntity.solution[listIndex].toString()
+                else
+                    null
             }
         }
 
@@ -447,7 +442,7 @@ class SudokuViewModel(application: Application) : AndroidViewModel(application) 
     }
 
     private fun sudokuSupply() {
-        viewModelScope.launch(Dispatchers.Default) {
+        viewModelScope.launch {
             while(true) {
                 for (difficulty in Difficulty.values()) {
                     if ((repository.getSudokuAmount(difficulty).firstOrNull() ?: 0) >= 20) continue

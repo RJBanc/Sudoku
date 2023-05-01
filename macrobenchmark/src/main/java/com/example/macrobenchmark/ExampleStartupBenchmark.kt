@@ -28,14 +28,10 @@ class ExampleStartupBenchmark {
     val benchmarkRule = MacrobenchmarkRule()
 
     @Test
-    fun startUpDefault() = startup(CompilationMode.DEFAULT)
+    fun startUpWarmUp() = startup(CompilationMode.Partial(BaselineProfileMode.Disable, warmupIterations = 3))
 
     @Test
-    fun startUpNoCompile() = startup(CompilationMode.Partial(BaselineProfileMode.Disable, warmupIterations = 3))
-
-    //JIT doesnt work for some reason
-//    @Test
-//    fun startUpNoCompile2() = startup(CompilationMode.None())
+    fun startUpNoCompile() = startup(CompilationMode.None())
 
     @Test
     fun startUpBaseline() = startup(CompilationMode.Partial(BaselineProfileMode.Require))
@@ -47,7 +43,7 @@ class ExampleStartupBenchmark {
         packageName = "com.example.sudoku",
         compilationMode = compilationMode,
         metrics = listOf(StartupTimingMetric()),
-        iterations = 5,
+        iterations = 10,
         startupMode = StartupMode.COLD,
         setupBlock = {  }
     ) {
