@@ -382,7 +382,7 @@ class SudokuViewModel(application: Application) : AndroidViewModel(application) 
         prepareSudoku(sudoku, solution, backup)
 
         while (true) {
-            var difficultyScore = difficultyRange[difficulty]!!.first
+            var difficultyScore = -1
             var attempts = 5
             do {
                 if (difficultyScore > difficultyRange[difficulty]!!.last) {
@@ -396,7 +396,7 @@ class SudokuViewModel(application: Application) : AndroidViewModel(application) 
                 if (!solver.solve()) {
                     if (attempts-- == 0) {
                         attempts = 5
-                        difficultyScore = difficultyRange[difficulty]!!.first
+                        difficultyScore = -1
                         prepareSudoku(sudoku, solution, backup)
                         continue
                     }
