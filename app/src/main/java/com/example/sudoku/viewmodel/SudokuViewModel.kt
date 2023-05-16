@@ -17,6 +17,7 @@ import com.example.sudoku.data.db.sudoku.SudokuEntity
 import com.example.sudoku.util.BitUtil
 import com.example.sudoku.util.SudokuUtil
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
@@ -441,8 +442,9 @@ class SudokuViewModel(application: Application) : AndroidViewModel(application) 
         repository.deleteSudoku(sudokuEntity)
     }
 
+    @OptIn(ExperimentalCoroutinesApi::class)
     private fun sudokuSupply() {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.Default) {
             while(true) {
                 for (difficulty in Difficulty.values()) {
                     if ((repository.getSudokuAmount(difficulty).firstOrNull() ?: 0) >= 20) continue
